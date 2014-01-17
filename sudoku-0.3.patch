@@ -1,0 +1,32 @@
+diff -ur sudoku-0.3/include/game.h sudoku-0.3.NEW/include/game.h
+--- sudoku-0.3/include/game.h	2005-08-13 01:43:45.000000000 +0200
++++ sudoku-0.3.NEW/include/game.h	2006-02-24 19:24:25.189263192 +0100
+@@ -40,6 +40,7 @@
+ 	int calculate_cost();
+ 	int rotate( int initial_cost );
+ 	void dump_state( std::ostream& ostr );
++	void dump_board( char *cp );
+ protected:
+ 	block3x3 blocks[BLOCKSIZE][BLOCKSIZE];
+ 	int mostx, mosty;
+diff -ur sudoku-0.3/src/game.cc sudoku-0.3.NEW/src/game.cc
+--- sudoku-0.3/src/game.cc	2005-08-13 01:44:05.000000000 +0200
++++ sudoku-0.3.NEW/src/game.cc	2006-02-24 19:23:59.298199232 +0100
+@@ -157,3 +157,17 @@
+ 	 }
+ 	 ostr /*<< "mostx = " << mostx << ", mosty = " << mosty*/ << std::endl;
+  }
++
++// Added by Joakim Larsson for the Soduko Challange
++void game::dump_board(char *cp)
++{
++    int ix = 0;
++
++    for ( int y =0; y < BLOCKSIZE*BLOCKSIZE ; y++ )
++    {
++        for ( int x = 0; x < BLOCKSIZE*BLOCKSIZE; x++ )
++        {
++            *cp++ = blocks[ x / BLOCKSIZE ][ y / BLOCKSIZE ].val( x % BLOCKSIZE, y % BLOCKSIZE ) + '0';
++	}
++    }
++}
