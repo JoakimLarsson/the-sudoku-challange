@@ -1,6 +1,5 @@
-diff -ur sudoku-0.3/include/game.h sudoku-0.3.NEW/include/game.h
 --- sudoku-0.3/include/game.h	2005-08-13 01:43:45.000000000 +0200
-+++ sudoku-0.3.NEW/include/game.h	2006-02-24 19:24:25.189263192 +0100
++++ sudoku-0.3.NEW/include/game.h	2014-03-05 14:15:51.056760791 +0100
 @@ -40,6 +40,7 @@
  	int calculate_cost();
  	int rotate( int initial_cost );
@@ -9,10 +8,20 @@ diff -ur sudoku-0.3/include/game.h sudoku-0.3.NEW/include/game.h
  protected:
  	block3x3 blocks[BLOCKSIZE][BLOCKSIZE];
  	int mostx, mosty;
-diff -ur sudoku-0.3/src/game.cc sudoku-0.3.NEW/src/game.cc
 --- sudoku-0.3/src/game.cc	2005-08-13 01:44:05.000000000 +0200
-+++ sudoku-0.3.NEW/src/game.cc	2006-02-24 19:23:59.298199232 +0100
-@@ -157,3 +157,17 @@
++++ sudoku-0.3.NEW/src/game.cc	2014-03-05 14:20:53.832750070 +0100
+@@ -21,7 +21,9 @@
+  *  along with this program; if not, write to the Free Software
+  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+  */
+- #include "../include/game.h"
++#include <stdlib.h>
++#include <string.h>
++#include "../include/game.h"
+  
+  game::game()
+  {
+@@ -157,3 +159,17 @@
  	 }
  	 ostr /*<< "mostx = " << mostx << ", mosty = " << mosty*/ << std::endl;
   }
@@ -30,3 +39,13 @@ diff -ur sudoku-0.3/src/game.cc sudoku-0.3.NEW/src/game.cc
 +	}
 +    }
 +}
+--- sudoku-0.3/src/main.cc	2005-08-13 02:11:29.000000000 +0200
++++ sudoku-0.3.NEW/src/main.cc	2014-03-05 14:19:45.248750940 +0100
+@@ -24,6 +24,7 @@
+ #include <iostream>
+ #include <fstream>
+ #include <sstream>
++#include <stdlib.h>
+ #include "../include/game.h"
+ 
+ bool isSaneXY( int val )
