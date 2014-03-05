@@ -1,5 +1,5 @@
 
- The Sudoku Challange main.c program
+ The Sudoku Challange
 
  This is free software copyrighted by me and may be used freely under BSD kindof 
  license however some example solvers below are GPL:ed so this file will be contaminated 
@@ -20,7 +20,7 @@
    Example open source sudoku solvers
  ===============================================================================
 
-   YASS 1.0 (GPL) - http:sourceforge.net/project/showfiles.php?group_id=145574&package_id=160138
+   YASS 1.0 (GPL) - http://sourceforge.net/project/showfiles.php?group_id=145574&package_id=160138
  -------------------------------------------------------------------------------
        
    tar xzvf yass-1.0.tar.gz
