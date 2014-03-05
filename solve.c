@@ -2,6 +2,7 @@
 // gcc -DDEBUG -o s solve.c; ./s 
 //
 
+#include <string.h>
 #include <stdio.h>
 
 #define update_board(X)     board[X] = num; \
@@ -406,6 +407,7 @@ void solve_board(char *board)
                             }
                         }
                     }
+#if 0
                     for (j = 0; j < 9; j++) // Check results
                     {
                         printf("Number %d in Square %d can go in cell: ", j + 1, i + 1);
@@ -418,6 +420,7 @@ void solve_board(char *board)
                         }
                         printf("\n");
                     }
+#endif
                 };
                 
 	        break;
