@@ -13,11 +13,9 @@
 //
 
 #include <stdio.h>
+#include <inttypes.h>
 #include <string.h>
-#include <unistd.h>
 #include <stdlib.h>
-#include <sys/time.h>
-#include <time.h>
 
 #define COMMENT_LENGTH 25
 
@@ -55,20 +53,36 @@ int count_left(char *board)
     return left;
 }
 
+/*
+ * This function was ripped from: 
+ * http://stackoverflow.com/questions/7935518/is-clock-gettime-adequate-for-submicrosecond-timing
+ */
+__inline__ uint64_t rdtsc(void) {
+  uint32_t lo, hi;
+  __asm__ __volatile__ (      // serialize
+  "xorl %%eax,%%eax \n        cpuid"
+  ::: "%rax", "%rbx", "%rcx", "%rdx");
+  /* We cannot use "=A", since this would use %rax on x86_64 and return only the lower 32bits of the TSC */
+  __asm__ __volatile__ ("rdtsc" : "=a" (lo), "=d" (hi));
+  return (uint64_t)hi << 32 | lo;
+}
+
 main()
 {
-    struct timeval tv1, tv2;
+    uint64_t tt1, tt2;
     char board[1024];
     FILE *fp;
-    int i, left, left2, diff;
+    int i, left, left2; 
+    long long diff;
     char *cmnt, *tmp;
 
     fp = fopen("boards.txt", "r");
 
     while (fgets(board, 1024, fp) != NULL)
     {
-
+      
 #ifdef BENCH
+      
         board[81] = '\0';
         board[sizeof(board)] = '\0';
         printf("%s ", board);
@@ -78,15 +92,15 @@ main()
         printf("=================");
         print_board(board);
 #endif
-
+      
         cmnt = &board[82];
         if ((tmp = strstr(cmnt, "Time")) != NULL)
         {
-            *tmp = '\0';
+	  *tmp = '\0';
         }
         else if ((tmp = strstr(cmnt, "\n")) != NULL)
         {
-            *tmp = '\0';
+	  *tmp = '\0';
         }
         while (strlen(cmnt) < COMMENT_LENGTH)
         {
@@ -94,9 +108,10 @@ main()
         }
         cmnt[COMMENT_LENGTH] = '\0';
         left = count_left(board);
-        gettimeofday(&tv1, NULL);
+
+	tt1 = rdtsc();
         solve_board(board);
-	gettimeofday(&tv2, NULL);
+	tt2 = rdtsc();
 
 #ifndef BENCH
         printf("-----------------");
@@ -107,9 +122,9 @@ main()
         printf (" %s", cmnt);
         left2 = count_left(board);
 
-        diff = (tv2.tv_sec - tv1.tv_sec) * 1000000 + tv2.tv_usec - tv1.tv_usec;
+	diff = tt2 - tt1;
 
-        printf("Time:%6u ", diff);
+        printf("Time:%16llu ", diff);
         printf("Left:%3u ", left2);
         printf("Solved:%3u\n", left - left2);
     }
