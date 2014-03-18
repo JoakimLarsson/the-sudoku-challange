@@ -20,16 +20,20 @@
    Example open source sudoku solvers
  ===============================================================================
 
+   C-based sudoku solver by the Code Mankeys - https://github.com/austinglaser/sudoku
+ -------------------------------------------------------------------------------
+   git clone https://github.com/austinglaser/sudoku
+   patch -p0 < sudoku.patch
+   g++ -o d -DBENCH -I sudoku main.c sudoku/main.c sudoku/sudoku.c sudoku/fifo.c sudoku.c; ./d
+
    YASS 1.0 (GPL) - http://sourceforge.net/project/showfiles.php?group_id=145574&package_id=160138
  -------------------------------------------------------------------------------
-       
    tar xzvf yass-1.0.tar.gz
    cd yass-1.0; ./configure; make; cd ..
    g++ -I yass-1.0/ -DBENCH -o s yass-1.0.c yass-1.0/src/solver.cc main.c; ./s
 
    Sudoku Solver 0.3 (GPL) - http://robert.rsa3.com/sudoku.html
  -------------------------------------------------------------------------------
-
    tar xzvf sudoku-0.3.tar.gz
    patch -p0 < sudoku-0.3.patch
    cd sudoku-0.3; ./configure; make; cd ..

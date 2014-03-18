@@ -1,0 +1,15 @@
+--- sudoku/main.c	2014-03-18 14:34:29.752754500 +0100
++++ sudoku.NEW/main.c	2014-03-17 16:28:59.312749692 +0100
+@@ -189,6 +189,7 @@
+ 	}
+ }
+ 
++#if 0
+ int main(int argc, char ** argv)
+ {
+ 	FILE * f = NULL;
+@@ -226,3 +227,4 @@
+   deleteQueue(q);
+   return 0;
+ }
++#endif
