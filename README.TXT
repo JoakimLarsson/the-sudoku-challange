@@ -28,6 +28,7 @@
 
    YASS 1.0 (GPL) - http://sourceforge.net/project/showfiles.php?group_id=145574&package_id=160138
  -------------------------------------------------------------------------------
+   wget -O yass-1.0.tar.gz "http://downloads.sourceforge.net/project/yasudokusolver/yasudokusolver/yass-1.0/yass-1.0.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fyasudokusolver%2Ffiles%2Fyasudokusolver%2F&ts=1395329568&use_mirror=heanet"
    tar xzvf yass-1.0.tar.gz
    cd yass-1.0; ./configure; make; cd ..
    g++ -I yass-1.0/ -DBENCH -o s yass-1.0.c yass-1.0/src/solver.cc main.c; ./s
