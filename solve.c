@@ -30,7 +30,7 @@
       char board[] = "5-64----2-7--9--5-8---5-7--7----3----89-6-37----5----1--3-4---6-5--2--4-9----51-7";
 
 
-void print_board(char *board)
+static void print_board(char *board)
 {
     int a, b;
 
@@ -45,6 +45,8 @@ void print_board(char *board)
     }
 }
 #endif
+
+char *solver_name(){ return "Reference"; }
 
 void solve_board(char *board)
 {

@@ -12,6 +12,8 @@
 //
 //
 
+#include <sqlite3.h>
+
 #include <stdio.h>
 #include <inttypes.h>
 #include <string.h>
@@ -19,6 +21,7 @@
 
 #define COMMENT_LENGTH 25
 
+extern char *solver_name();
 extern void solve_board(char *cp);
 
 void print_board(char *board)
@@ -67,69 +70,109 @@ __inline__ uint64_t rdtsc(void) {
   return (uint64_t)hi << 32 | lo;
 }
 
+#if SQLITE
+static int callback(void *NotUsed, int argc, char **argv, char **azColName){
+  int i;
+  for(i=0; i<argc; i++){
+    printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
+  }
+  printf("\n");
+  return 0;
+}
+#endif
+
 main()
 {
-    uint64_t tt1, tt2;
-    char board[1024];
-    FILE *fp;
-    int i, left, left2; 
-    long long diff;
-    char *cmnt, *tmp;
+  uint64_t tt1, tt2;
+  char board[1024];
+  FILE *fp;
+  int i, left, left2; 
+  long long diff;
+  char *cmnt, *tmp;
+  
+#ifdef SQLITE
+  sqlite3 *db;
+  char *zErrMsg = 0;
+  int rc;
+  char *sql = "INSERT INTO LAPS (ID, BOARD, CPU, SOLVER, TIME) VALUES (%d, %d, \'%s\', \'%s\', %llu);";
+  char qry[1024];
+  int id = 0;
+  int bid = 45;
 
-    fp = fopen("boards.txt", "r");
+  rc = sqlite3_open("tss.db", &db);
+  qry[0] = '\0';
 
-    while (fgets(board, 1024, fp) != NULL)
-    {
+  if( rc ){
+    fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+    exit(0);
+  }else{
+    fprintf(stderr, "Opened database successfully\n");
+  }
+#endif
+
+  fp = fopen("boards.txt", "r");
+
+  while (fgets(board, 1024, fp) != NULL){
       
 #ifdef BENCH
       
-        board[81] = '\0';
-        board[sizeof(board)] = '\0';
-        printf("%s ", board);
+    board[81] = '\0';
+    board[sizeof(board)] = '\0';
+    printf("%s ", board);
 #else
-        printf("\n\n-----------------");
-        printf("\n%s", &board[81]);
-        printf("=================");
-        print_board(board);
+    printf("\n\n-----------------");
+    printf("\n%s", &board[81]);
+    printf("=================");
+    print_board(board);
 #endif
-      
-        cmnt = &board[82];
-        if ((tmp = strstr(cmnt, "Time")) != NULL)
-        {
-	  *tmp = '\0';
-        }
-        else if ((tmp = strstr(cmnt, "\n")) != NULL)
-        {
-	  *tmp = '\0';
-        }
-        while (strlen(cmnt) < COMMENT_LENGTH)
-        {
-            strcat(cmnt, " ");
-        }
-        cmnt[COMMENT_LENGTH] = '\0';
-        left = count_left(board);
-
-	tt1 = rdtsc();
-        solve_board(board);
-	tt2 = rdtsc();
-
-#ifndef BENCH
-        printf("-----------------");
-        print_board(board);
-        printf("-----------------\n");
-#endif
-
-        printf (" %s", cmnt);
-        left2 = count_left(board);
-
-	diff = tt2 - tt1;
-
-        printf("Time:%16llu ", diff);
-        printf("Left:%3u ", left2);
-        printf("Solved:%3u\n", left - left2);
+    
+    cmnt = &board[82];
+    if ((tmp = strstr(cmnt, "Time")) != NULL){
+      *tmp = '\0';
     }
-
-    fclose(fp);
-
-    exit(0);
+    else if ((tmp = strstr(cmnt, "\n")) != NULL){
+      *tmp = '\0';
+    }
+    while (strlen(cmnt) < COMMENT_LENGTH){
+      strcat(cmnt, " ");
+    }
+    cmnt[COMMENT_LENGTH] = '\0';
+    left = count_left(board);
+    
+    tt1 = rdtsc();
+    solve_board(board);
+    tt2 = rdtsc();
+    
+#ifndef BENCH
+    printf("-----------------");
+    print_board(board);
+    printf("-----------------\n");
+#endif
+    
+    printf (" %s", cmnt);
+    left2 = count_left(board);
+    
+    diff = tt2 - tt1;
+    
+#ifdef SQLITE
+    snprintf(qry, sizeof(qry), sql, id, bid, "KVM", solver_name(), diff);
+    printf("%s\n", qry);
+    rc = sqlite3_exec(db, qry, callback, 0, &zErrMsg);
+    if( rc != SQLITE_OK ){
+      fprintf(stderr, "SQL error: %s\n", zErrMsg);
+      sqlite3_free(zErrMsg);
+    }else{
+      fprintf(stdout, "Records created successfully\n");
+    }
+#else
+    printf("Time:%16llu ", diff);
+    printf("Left:%3u ", left2);
+    printf("Solved:%3u\n", left - left2);
+#endif
+  }
+  
+  fclose(fp);
+  sqlite3_close(db);
+  
+  exit(0);
 }

@@ -1,8 +1,9 @@
 
 BUILD_DIR=build
 CC=g++
-CFLAGS=-c -DBENCH -I $(BUILD_DIR)
-LDFLAGS= 
+#CFLAGS=-c -DBENCH -I $(BUILD_DIR)
+CFLAGS=-c -DSQLITE -DBENCH -I $(BUILD_DIR)
+LDFLAGS= -lsqlite3
 
 all: ref solver yass
 
