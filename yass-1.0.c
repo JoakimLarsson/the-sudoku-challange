@@ -49,6 +49,8 @@ void print_board(char *board)
 }
 #endif
 
+char *solver_name(){ return "Yass 1.0"; }
+
 void solve_board(char *board)
 {
     int i, j;

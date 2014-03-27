@@ -50,6 +50,8 @@ void print_board(char *board)
 }
 #endif
 
+char *solver_name(){ return "Sudoku Solver 0.3"; }
+
 void solve_board(char *board)
 {
     int i, j;
