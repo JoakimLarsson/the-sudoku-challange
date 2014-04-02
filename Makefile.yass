@@ -1,0 +1,44 @@
+
+CC=g++
+CFLAGS=-c -I $(BUILD_DIR)/$(BASE) -fPIC 
+LDFLAGS=-shared -Wl,-soname,$(LIB) -Wl,--version-script=tss.version
+
+NAME=yass
+ANAME=yass
+VER=1.0
+BASE=$(ANAME)-$(VER)
+LIB=$(NAME).so.$(VER)
+ARCHIVE:=$(BASE).tar.gz
+
+BUILD_DIR=build
+SOURCES=$(BASE).c $(BUILD_DIR)/$(BASE)/src/solver.cc
+TMP=$(SOURCES:.c=.o)
+OBJECTS=$(TMP:.cc=.o)
+
+yass: $(OBJECTS)
+	$(CC) $(LDFLAGS) -o $(LIB).0 $(OBJECTS) 
+
+$(BASE).c: $(BUILD_DIR)/$(BASE)/include/solver.h
+
+$(BUILD_DIR)/$(BASE)/include/solver.h: $(ARCHIVE)
+	rm -r $(BUILD_DIR)/$(BASE) || true
+	mkdir -p $(BUILD_DIR)
+	cd $(BUILD_DIR); tar xzvf ../$(ARCHIVE)
+	cd $(BUILD_DIR)/$(BASE); ./configure
+
+$(ARCHIVE):
+	wget -N -O $(ARCHIVE) "http://downloads.sourceforge.net/project/yasudokusolver/yasudokusolver/yass-1.0/yass-1.0.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fyasudokusolver%2Ffiles%2Fyasudokusolver%2F&ts=1395329568&use_mirror=heanet"
+
+CLEAN_LIST = $(OBJECTS) $(BUILD_DIR)/$(BASE)
+
+clean:
+	@- $(RM) -r $(CLEAN_LIST)
+
+.cpp.o:
+	$(CC) $(CFLAGS) $< -o $@
+
+.cc.o:
+	$(CC) $(CFLAGS) $< -o $@
+
+.c.o:
+	$(CC) $(CFLAGS) $< -o $@
