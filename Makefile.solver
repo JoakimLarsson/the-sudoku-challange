@@ -1,0 +1,50 @@
+NAME=sudokusolver
+ANAME=sudoku
+VER=0.3
+BASE=$(ANAME)-$(VER)
+LIB=$(NAME).so.$(VER)
+BUILD_DIR=build
+CC=g++
+#CFLAGS=-c -DBENCH -I $(BUILD_DIR)
+CFLAGS=-c -I $(BUILD_DIR)/$(BASE)/include -fPIC 
+LDFLAGS=-shared -Wl,-soname,$(LIB) -Wl,--version-script=tss.version
+
+all: solver
+
+# Sudoku Solver
+SOURCES=$(BASE).c $(BUILD_DIR)/$(BASE)/src/game.cc $(BUILD_DIR)/$(BASE)/src/block3x3.cc
+TMP=$(SOURCES:.c=.o)
+OBJECTS=$(TMP:.cc=.o)
+
+ARCHIVE:=$(BASE).tar.gz
+#EXE=solver
+#CFLAGS+= -I $(BUILD_DIR)/include
+
+solver: $(OBJECTS)
+	$(CC) $(LDFLAGS) -o $(LIB).0 $(OBJECTS) 
+
+#$(BUILD_DIR)/src/game.cc: $(SS_ARCHIVE)
+$(BASE).c: $(BUILD_DIR)/include/game.h
+
+$(BUILD_DIR)/include/game.h: $(ARCHIVE)
+	rm -r $(BUILD_DIR) || true
+	mkdir -p $(BUILD_DIR)
+	cd $(BUILD_DIR); tar xzvf ../$(ARCHIVE); patch -p0 < ../$(BASE).patch
+	cd $(BASE); ./configure; make;
+
+$(ARCHIVE):
+	wget -N -O $(ARCHIVE) "http://robert.rsa3.com/pmwiki/uploads/Projects/sudoku-0.3.tar.gz"
+
+CLEAN_LIST = $(OBJECTS) $(BUILD_DIR) $(ARCHIVE)
+
+clean:
+	@- $(RM) -r $(CLEAN_LIST)
+
+.cpp.o:
+	$(CC) $(CFLAGS) $< -o $@
+
+.cc.o:
+	$(CC) $(CFLAGS) $< -o $@
+
+.c.o:
+	$(CC) $(CFLAGS) $< -o $@

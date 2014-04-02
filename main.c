@@ -21,8 +21,8 @@
 
 #define COMMENT_LENGTH 25
 
-extern char *solver_name();
-extern void solve_board(char *cp);
+extern "C" char *solver_name();
+extern "C" void solve_board(char *cp);
 
 void print_board(char *board)
 {

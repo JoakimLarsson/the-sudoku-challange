@@ -1,0 +1,4 @@
+FOO {
+  global: solve_board;solver_name; # explicitly list symbols to be exported
+  local: *;         # hide everything else
+};
