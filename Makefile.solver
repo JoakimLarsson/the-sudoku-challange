@@ -23,7 +23,7 @@ $(BASE).c: $(BUILD_DIR)/$(BASE)/include/game.h
 $(BUILD_DIR)/$(BASE)/include/game.h: $(ARCHIVE)
 	rm -r $(BUILD_DIR)/$(BASE) || true
 	mkdir -p $(BUILD_DIR)
-	cd $(BUILD_DIR); tar xzvf ../$(ARCHIVE); patch -p0 < ../$(BASE).patch
+	cd $(BUILD_DIR); tar xzf ../$(ARCHIVE); patch -s -p0 < ../$(BASE).patch
 	cd $(BUILD_DIR)/$(BASE); ./configure;
 
 $(ARCHIVE):
