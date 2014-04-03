@@ -46,9 +46,9 @@ static void print_board(char *board)
 }
 #endif
 
-char *solver_name(){ return "Reference"; }
+extern "C" char *solver_name(){ return (char *) "Reference"; }
 
-void solve_board(char *board)
+extern "C" void solve_board(char *board)
 {
     // Cell  (0-81) to what square table (0-8) sqr[]
     char sqrs[]     = "000111222000111222000111222333444555333444555333444555666777888666777888666777888";

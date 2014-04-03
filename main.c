@@ -94,7 +94,7 @@ main()
   sqlite3 *db;
   char *zErrMsg = 0;
   int rc;
-  char *sql = "INSERT INTO LAPS (ID, BOARD, CPU, SOLVER, TIME) VALUES (%d, %d, \'%s\', \'%s\', %llu);";
+  char *sql = (char *) "INSERT INTO LAPS (ID, BOARD, CPU, SOLVER, TIME) VALUES (%d, %d, \'%s\', \'%s\', %llu);";
   char qry[1024];
   int id = 0;
   int bid = 45;
