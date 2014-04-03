@@ -1,0 +1,44 @@
+
+CC=g++
+CFLAGS=-c -I $(BUILD_DIR)/$(BASE) -fPIC 
+LDFLAGS=-shared -Wl,-soname,$(LIB) -Wl,--version-script=tss.version
+
+NAME=cmankey
+ANAME=cmankey
+VER=1.0
+BASE=$(ANAME)-$(VER)
+LIB=$(NAME).so.$(VER)
+ARCHIVE=$(BUILD_DIR)/$(BASE)
+
+BUILD_DIR=build
+SOURCES=$(BASE).c $(BUILD_DIR)/$(BASE)/main.c  $(BUILD_DIR)/$(BASE)/sudoku.c  $(BUILD_DIR)/$(BASE)/fifo.c
+TMP=$(SOURCES:.c=.o)
+OBJECTS=$(TMP:.cc=.o)
+
+cmankey: $(OBJECTS)
+	$(CC) $(LDFLAGS) -o $(LIB).0 $(OBJECTS) 
+
+$(BASE).c: $(BUILD_DIR)/$(BASE)/sudoku.h
+	@true
+
+$(BUILD_DIR)/$(BASE)/sudoku.h: $(ARCHIVE)
+	@true
+
+$(ARCHIVE):
+	git clone -q https://github.com/austinglaser/sudoku $(ARCHIVE)
+	cd $(ARCHIVE); git checkout -q 93e2b015720de7e6b94ecc7cbcb79320862114e9
+	cd $(BUILD_DIR); yes n | patch -s -p0 < ../$(BASE).patch || true
+
+CLEAN_LIST = $(OBJECTS) $(BUILD_DIR)/$(BASE)
+
+clean:
+	@- $(RM) -r $(CLEAN_LIST)
+
+.cpp.o:
+	$(CC) $(CFLAGS) $< -o $@
+
+.cc.o:
+	$(CC) $(CFLAGS) $< -o $@
+
+.c.o:
+	$(CC) $(CFLAGS) $< -o $@

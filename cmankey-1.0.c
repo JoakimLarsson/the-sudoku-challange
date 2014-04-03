@@ -1,5 +1,5 @@
 //
-// Example implementation of solve_board() for the Sudoku Challange using A C-based sudoku solver by the Code Mankeys 
+// Implementation of solve_board() for the Sudoku Challange using A C-based sudoku solver by the Code Mankeys 
 //
 // https://github.com/austinglaser/sudoku
 //
@@ -61,7 +61,9 @@ void print_board(char *board)
 }
 #endif
 
-void solve_board(char *board)
+extern "C" char *solver_name(){ return (char *) "CMankeys 1.0"; }
+
+extern "C" void solve_board(char *board)
 {
   int i, j;
   int cost, round;
