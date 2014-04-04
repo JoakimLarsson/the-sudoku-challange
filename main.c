@@ -12,12 +12,12 @@
 //
 //
 
-#include <sqlite3.h>
-
 #include <stdio.h>
 #include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
+
+#include "hrtimer.h"
 
 #define COMMENT_LENGTH 25
 
@@ -56,30 +56,6 @@ int count_left(char *board)
     return left;
 }
 
-/*
- * This function was ripped from: 
- * http://stackoverflow.com/questions/7935518/is-clock-gettime-adequate-for-submicrosecond-timing
- */
-__inline__ uint64_t rdtsc(void) {
-  uint32_t lo, hi;
-  __asm__ __volatile__ (      // serialize
-  "xorl %%eax,%%eax \n        cpuid"
-  ::: "%rax", "%rbx", "%rcx", "%rdx");
-  /* We cannot use "=A", since this would use %rax on x86_64 and return only the lower 32bits of the TSC */
-  __asm__ __volatile__ ("rdtsc" : "=a" (lo), "=d" (hi));
-  return (uint64_t)hi << 32 | lo;
-}
-
-#if SQLITE
-static int callback(void *NotUsed, int argc, char **argv, char **azColName){
-  int i;
-  for(i=0; i<argc; i++){
-    printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
-  }
-  printf("\n");
-  return 0;
-}
-#endif
 
 main()
 {
@@ -90,25 +66,6 @@ main()
   long long diff;
   char *cmnt, *tmp;
   
-#ifdef SQLITE
-  sqlite3 *db;
-  char *zErrMsg = 0;
-  int rc;
-  char *sql = (char *) "INSERT INTO LAPS (ID, BOARD, CPU, SOLVER, TIME) VALUES (%d, %d, \'%s\', \'%s\', %llu);";
-  char qry[1024];
-  int id = 0;
-  int bid = 45;
-
-  rc = sqlite3_open("tss.db", &db);
-  qry[0] = '\0';
-
-  if( rc ){
-    fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
-    exit(0);
-  }else{
-    fprintf(stderr, "Opened database successfully\n");
-  }
-#endif
 
   fp = fopen("boards.txt", "r");
 
@@ -139,9 +96,9 @@ main()
     cmnt[COMMENT_LENGTH] = '\0';
     left = count_left(board);
     
-    tt1 = rdtsc();
+    tt1 = get_hrtimer();
     solve_board(board);
-    tt2 = rdtsc();
+    tt2 = get_hrtimer();
     
 #ifndef BENCH
     printf("-----------------");
@@ -154,25 +111,12 @@ main()
     
     diff = tt2 - tt1;
     
-#ifdef SQLITE
-    snprintf(qry, sizeof(qry), sql, id, bid, "KVM", solver_name(), diff);
-    printf("%s\n", qry);
-    rc = sqlite3_exec(db, qry, callback, 0, &zErrMsg);
-    if( rc != SQLITE_OK ){
-      fprintf(stderr, "SQL error: %s\n", zErrMsg);
-      sqlite3_free(zErrMsg);
-    }else{
-      fprintf(stdout, "Records created successfully\n");
-    }
-#else
     printf("Time:%16llu ", diff);
     printf("Left:%3u ", left2);
     printf("Solved:%3u\n", left - left2);
-#endif
   }
   
   fclose(fp);
-  sqlite3_close(db);
   
   exit(0);
 }
