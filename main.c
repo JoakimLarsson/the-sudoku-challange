@@ -21,6 +21,7 @@
 
 #define COMMENT_LENGTH 25
 
+extern int store_result(int bid, char *hardware, char *solver, long long diff);
 extern "C" char *solver_name();
 extern "C" void solve_board(char *cp);
 
@@ -114,6 +115,9 @@ main()
     printf("Time:%16llu ", diff);
     printf("Left:%3u ", left2);
     printf("Solved:%3u\n", left - left2);
+
+    store_result(0, "KVM", solver_name(), diff);
+
   }
   
   fclose(fp);

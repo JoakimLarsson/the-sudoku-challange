@@ -10,7 +10,7 @@ LDFLAGS= -lsqlite3
 all: ref solver yass cmankey
 
 # Reference solver
-REF_SOURCES=main.c solve.c
+REF_SOURCES=main.c solve.c sqlite3.c
 REF_OBJECTS=$(REF_SOURCES:.c=.o)
 REF_EXE=reference
 REF_CLEAN=$(REF_OBJECTS)
