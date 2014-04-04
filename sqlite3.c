@@ -22,6 +22,16 @@ int load_result(int bid, char *hardware, char *solver)
 {
 }
 
+/*
+ * Store result in a database
+ * Arguments:
+ *  bid - Board ID, must exist in the BOARDS table
+ *  hardware - identify the hardware used, timings from different hardwares
+ *             OR different boards doesn't make much sense to compare here.
+ *  solver - identify the solver routines uniquely
+ *  diff - integer value describing one meassure execution time for the routine 
+ *
+ */
 int store_result(int bid, char *hardware, char *solver, long long diff)
 {
   sqlite3 *db;
@@ -36,19 +46,35 @@ int store_result(int bid, char *hardware, char *solver, long long diff)
 
   if( rc ){
     fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
-    exit(0);
+    return -1;
   }else{
     fprintf(stderr, "Opened database successfully\n");
   }
 
   snprintf(qry, sizeof(qry), sql, id, bid, hardware, solver, diff);
   printf("%s\n", qry);
-  rc = sqlite3_exec(db, qry, callback, 0, &zErrMsg);
-  if( rc != SQLITE_OK ){
-    fprintf(stderr, "SQL error: %s\n", zErrMsg);
-    sqlite3_free(zErrMsg);
-  }else{
-    fprintf(stdout, "Records created successfully\n");
+  while(1){
+    rc = sqlite3_exec(db, qry, callback, 0, &zErrMsg);
+    if( rc != SQLITE_OK ){
+      fprintf(stderr, "SQL error: %d - %s\n", rc, zErrMsg);
+      sqlite3_free(zErrMsg);
+      if (rc == SQLITE_ERROR){
+	fprintf(stderr, "Creating table\n");
+	char *sql2 = (char *) "CREATE TABLE LAPS(ID int, BOARD int, CPU text, SOLVER text, TIME int8);";
+	rc = sqlite3_exec(db, sql2, callback, 0, &zErrMsg);
+	if( rc != SQLITE_OK ){
+	  fprintf(stderr, "SQL error: %d - %s\n", rc, zErrMsg);
+	  sqlite3_free(zErrMsg);
+	  break;
+	}
+	continue;
+      }
+      else
+	break;
+    }else{
+      fprintf(stdout, "Records created successfully\n");
+      break;
+    }
   }
   sqlite3_close(db);
 
