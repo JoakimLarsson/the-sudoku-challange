@@ -9,17 +9,19 @@
 #include <stdlib.h>
 #include <sqlite3.h>
 
-static int callback(void *NotUsed, int argc, char **argv, char **azColName){
+static int callback(void *ret, int argc, char **argv, char **azColName){
   int i;
   for(i=0; i<argc; i++){
-    printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
+    if (strncmp(azColName[i], "ID", 3) == 0){
+      *((int *)ret) = atoi(argv[i]);
+    } 
   }
-  printf("\n");
   return 0;
 }
 
 int load_result(int bid, char *hardware, char *solver)
 {
+  return 0;
 }
 
 /*
@@ -37,9 +39,10 @@ int store_result(int bid, char *hardware, char *solver, long long diff)
   sqlite3 *db;
   char *zErrMsg = 0;
   int rc;
-  char *sql = (char *) "INSERT INTO LAPS (ID, BOARD, CPU, SOLVER, TIME) VALUES (%d, %d, \'%s\', \'%s\', %llu);";
+  char *sql = (char *) "INSERT INTO LAPS (ID, BOARD, CPU, SOLVER, TIME) VALUES (NULL, %d, \'%s\', \'%s\', %llu);";
   char qry[1024];
   int id = 0;
+  int ret;
 
   rc = sqlite3_open("tss.db", &db);
   qry[0] = '\0';
@@ -47,47 +50,105 @@ int store_result(int bid, char *hardware, char *solver, long long diff)
   if( rc ){
     fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
     return -1;
-  }else{
-    fprintf(stderr, "Opened database successfully\n");
   }
 
-  snprintf(qry, sizeof(qry), sql, id, bid, hardware, solver, diff);
-  printf("%s\n", qry);
+  snprintf(qry, sizeof(qry), sql, bid, hardware, solver, diff);
+  //  printf("%s\n", qry);
   while(1){
     rc = sqlite3_exec(db, qry, callback, 0, &zErrMsg);
     if( rc != SQLITE_OK ){
       fprintf(stderr, "SQL error: %d - %s\n", rc, zErrMsg);
       sqlite3_free(zErrMsg);
       if (rc == SQLITE_ERROR){
-	fprintf(stderr, "Creating table\n");
-	char *sql2 = (char *) "CREATE TABLE LAPS(ID int, BOARD int, CPU text, SOLVER text, TIME int8);";
+	char *sql2 = (char *) "CREATE TABLE LAPS(ID INTEGER PRIMARY KEY ASC, BOARD int, CPU text, SOLVER text, TIME int8);";
 	rc = sqlite3_exec(db, sql2, callback, 0, &zErrMsg);
 	if( rc != SQLITE_OK ){
 	  fprintf(stderr, "SQL error: %d - %s\n", rc, zErrMsg);
 	  sqlite3_free(zErrMsg);
+	  ret = -1; // Error, can't create table 
 	  break;
 	}
-	continue;
+	continue; // Table created, try again
       }
       else
-	break;
+	ret = -1;
+	break; // Another error, result NOT stored
     }else{
-      fprintf(stdout, "Records created successfully\n");
+      ret = 0; // Result stored
       break;
     }
   }
   sqlite3_close(db);
 
-  return 0;
+  return ret;
 }
 
 /*
  * Store board in database unless already stored
  * return values: 0 = OK, -1 = failed
  */
-int store_board(char *board)
+int store_board(char *board, char *comment)
 {
-  return -1;
+  sqlite3 *db;
+  char *zErrMsg = 0;
+  int rc;
+  int ret;
+  char *sql = (char *) "INSERT INTO BOARDS (ID, BOARD, COMMENT) VALUES (NULL, \'%s\', \'%s\');";
+  char qry[1024];
+  int id = 0;
+
+  rc = sqlite3_open("tss.db", &db);
+  qry[0] = '\0';
+  ret = 0;
+
+  if( rc ){
+    fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+    return -1;
+  }else{
+    //    fprintf(stderr, "Opened database successfully\n");
+  }
+
+  snprintf(qry, sizeof(qry), sql, board, comment);
+  //  printf("%s\n", qry);
+  while(1){
+    rc = sqlite3_exec(db, qry, callback, 0, &zErrMsg);
+    if( rc != SQLITE_OK ){
+      //      fprintf(stderr, "SQL error: %d - %s\n", rc, zErrMsg);
+      sqlite3_free(zErrMsg);
+      if (rc == SQLITE_ERROR){
+	//	fprintf(stderr, "Creating table\n");
+	char *sql2 = (char *) "CREATE TABLE BOARDS(ID INTEGER PRIMARY KEY ASC, BOARD text UNIQUE, COMMENT text);";
+	rc = sqlite3_exec(db, sql2, callback, 0, &zErrMsg);
+	if( rc != SQLITE_OK ){
+	  fprintf(stderr, "SQL error: %d - %s\n", rc, zErrMsg);
+	  sqlite3_free(zErrMsg);
+	  ret = -1;
+	  break;
+	}
+	continue;
+      }
+      else if (rc == SQLITE_CONSTRAINT){
+	char *sql3 = (char *) "SELECT ID FROM BOARDS WHERE BOARD LIKE '%s';";
+	snprintf(qry, sizeof(qry), sql3, board);
+	//	printf("Q: %s\n", qry);
+	rc = sqlite3_exec(db, qry, callback, &ret, &zErrMsg);
+	//	printf("Selected ID = %d, (%d)\n", ret, rc);
+	break;;
+      }
+      else{
+	ret = sqlite3_last_insert_rowid(db);
+	break;
+      }
+    }
+    else{
+      //      fprintf(stdout, "Board created successfully\n");
+      ret = sqlite3_last_insert_rowid(db);
+      break;
+    }
+  }
+  sqlite3_close(db);
+
+  return ret;
 }
 
 /*

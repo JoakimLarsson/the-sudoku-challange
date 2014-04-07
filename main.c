@@ -21,6 +21,7 @@
 
 #define COMMENT_LENGTH 25
 
+extern int store_board(char *board, char *comment);
 extern int store_result(int bid, char *hardware, char *solver, long long diff);
 extern "C" char *solver_name();
 extern "C" void solve_board(char *cp);
@@ -45,7 +46,7 @@ int count_left(char *board)
     int i, left;
 
     left = 0;
-
+ 
     for (i = 0; i < 81; i++)
     {
         if (board[i] == '-')
@@ -64,6 +65,7 @@ main()
   char board[1024];
   FILE *fp;
   int i, left, left2; 
+  int bid;
   long long diff;
   char *cmnt, *tmp;
   
@@ -71,12 +73,12 @@ main()
   fp = fopen("boards.txt", "r");
 
   while (fgets(board, 1024, fp) != NULL){
-      
 #ifdef BENCH
       
-    board[81] = '\0';
-    board[sizeof(board)] = '\0';
+    board[81 + COMMENT_LENGTH + 1] = '\0';
     printf("%s ", board);
+    board[81] = '\0';
+    cmnt = &board[82];
 #else
     printf("\n\n-----------------");
     printf("\n%s", &board[81]);
@@ -84,7 +86,6 @@ main()
     print_board(board);
 #endif
     
-    cmnt = &board[82];
     if ((tmp = strstr(cmnt, "Time")) != NULL){
       *tmp = '\0';
     }
@@ -95,6 +96,7 @@ main()
       strcat(cmnt, " ");
     }
     cmnt[COMMENT_LENGTH] = '\0';
+    bid = store_board(board, cmnt);
     left = count_left(board);
     
     tt1 = get_hrtimer();
@@ -107,7 +109,6 @@ main()
     printf("-----------------\n");
 #endif
     
-    printf (" %s", cmnt);
     left2 = count_left(board);
     
     diff = tt2 - tt1;
@@ -116,7 +117,7 @@ main()
     printf("Left:%3u ", left2);
     printf("Solved:%3u\n", left - left2);
 
-    store_result(0, "KVM", solver_name(), diff);
+    store_result(bid, (char *) "KVM", solver_name(), diff);
 
   }
   
