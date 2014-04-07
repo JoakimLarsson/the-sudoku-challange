@@ -12,6 +12,7 @@
 //
 //
 
+#include <dlfcn.h>
 #include <stdio.h>
 #include <inttypes.h>
 #include <string.h>
@@ -59,7 +60,7 @@ int count_left(char *board)
 }
 
 
-main()
+main(int argc, char **argv)
 {
   uint64_t tt1, tt2;
   char board[1024];
@@ -68,6 +69,11 @@ main()
   int bid;
   long long diff;
   char *cmnt, *tmp;
+  void *lib_handle;
+  void (*do_solve)(char *);
+  char *(*get_name)(void);
+  char * error;
+
   
 
   fp = fopen("boards.txt", "r");
@@ -97,10 +103,26 @@ main()
     }
     cmnt[COMMENT_LENGTH] = '\0';
     bid = store_board(board, cmnt);
-    left = count_left(board);
-    
+    left = count_left(board);    
+
+    lib_handle = dlopen(argv[1], RTLD_LAZY);
+    if (!lib_handle){
+      fprintf(stderr, "%s\n", dlerror());
+      exit(1);
+    }
+
+    do_solve = (void (*)(char*)) dlsym(lib_handle, "solve_board");
+    get_name = (char* (*)())     dlsym(lib_handle, "solver_name");
+
+    if ((error = dlerror()) != NULL)  
+    {
+	fprintf(stderr, "%s\n", error);
+	exit(1);
+    }
+
+
     tt1 = get_hrtimer();
-    solve_board(board);
+    (*do_solve)(board);
     tt2 = get_hrtimer();
     
 #ifndef BENCH
@@ -117,7 +139,7 @@ main()
     printf("Left:%3u ", left2);
     printf("Solved:%3u\n", left - left2);
 
-    store_result(bid, (char *) "KVM", solver_name(), diff);
+    store_result(bid, (char *) "KVM", (*get_name)(), diff);
 
   }
   

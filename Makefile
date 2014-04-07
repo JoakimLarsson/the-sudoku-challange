@@ -9,6 +9,15 @@ LDFLAGS= -lsqlite3
 
 all: ref solver yass cmankey
 
+# Plugin solver
+PEF_SOURCES=main.c sqlite3.c
+PEF_OBJECTS=$(PEF_SOURCES:.c=.o)
+PEF_EXE=psolv
+PEF_CLEAN=$(PEF_OBJECTS)
+
+pef: $(PEF_OBJECTS)
+	$(CC) $(PEF_OBJECTS) -o $(PEF_EXE) $(LDFLAGS) -ldl
+
 # Reference solver
 REF_SOURCES=main.c solve.c sqlite3.c
 REF_OBJECTS=$(REF_SOURCES:.c=.o)
