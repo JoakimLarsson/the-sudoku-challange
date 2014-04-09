@@ -1,6 +1,6 @@
 
 CC=g++
-CFLAGS=-c -I $(BUILD_DIR)/$(BASE) -fPIC 
+CFLAGS=-c -I $(BUILD_DIR)/$(BASE) -fPIC -DNAME=$(BASE)
 LDFLAGS=-shared -Wl,-soname,$(LIB) -Wl,--version-script=tss.version
 
 NAME=cmankey
