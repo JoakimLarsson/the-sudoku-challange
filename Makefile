@@ -7,7 +7,7 @@ LDFLAGS= -lsqlite3
 
 .PHONY: clean ref solver yass cmankey
 
-all: ref solver yass cmankey
+all: reference solver yass cmankey
 
 # Plugin solver
 PEF_SOURCES=main.c sqlite3.c
@@ -26,6 +26,10 @@ REF_CLEAN=$(REF_OBJECTS)
 
 ref: $(REF_OBJECTS)
 	$(CC) $(REF_OBJECTS) -o $(REF_EXE) $(LDFLAGS) 
+
+# Reference implementation (my stuff)
+reference:
+	make -f Makefile.reference
 
 # Yass
 yass:

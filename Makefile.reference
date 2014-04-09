@@ -1,0 +1,29 @@
+
+CC=g++
+CFLAGS=-c -fPIC 
+LDFLAGS=-shared -Wl,-soname,$(LIB) -Wl,--version-script=tss.version
+
+NAME=reference
+VER=1.0
+LIB=$(NAME).so.$(VER)
+
+BUILD_DIR=build
+SOURCES=solve.c
+OBJECTS=$(SOURCES:.c=.o)
+
+yass: $(OBJECTS)
+	$(CC) $(LDFLAGS) -o $(LIB).0 $(OBJECTS) 
+
+CLEAN_LIST = $(OBJECTS)
+
+clean:
+	@- $(RM) -r $(CLEAN_LIST)
+
+.cpp.o:
+	$(CC) $(CFLAGS) $< -o $@
+
+.cc.o:
+	$(CC) $(CFLAGS) $< -o $@
+
+.c.o:
+	$(CC) $(CFLAGS) $< -o $@
