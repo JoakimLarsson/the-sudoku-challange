@@ -7,7 +7,7 @@ LDFLAGS= -lsqlite3
 
 .PHONY: clean ref solver yass cmankey
 
-all: reference solver yass cmankey
+all: pef reference solver yass cmankey
 
 # Plugin solver
 PEF_SOURCES=main.c sqlite3.c
@@ -42,14 +42,17 @@ solver:
 # Code Mankeys Sudoku solver
 cmankey:
 	make -f Makefile.cmankey
+	make -f Makefile.cmankey-lilo
 
 CLEAN_LIST = $(REF_CLEAN)
 
 clean:
-	@- $(RM) -r $(CLEAN_LIST)
+	$(RM) -r $(CLEAN_LIST)
 	make -f Makefile.solver clean
 	make -f Makefile.yass clean
+	make -f Makefile.reference clean
 	make -f Makefile.cmankey clean
+	make -f Makefile.cmankey-lilo clean
 
 .cpp.o:
 	$(CC) $(CFLAGS) $< -o $@
