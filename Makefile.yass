@@ -6,6 +6,7 @@ LDFLAGS=-shared -Wl,-soname,$(LIB) -Wl,--version-script=tss.version
 NAME=yass
 ANAME=yass
 VER=1.0
+MIN=0
 BASE=$(ANAME)-$(VER)
 LIB=$(NAME).so.$(VER)
 ARCHIVE:=$(BASE).tar.gz
@@ -16,7 +17,7 @@ TMP=$(SOURCES:.c=.o)
 OBJECTS=$(TMP:.cc=.o)
 
 yass: $(OBJECTS)
-	$(CC) $(LDFLAGS) -o $(LIB).0 $(OBJECTS) 
+	$(CC) $(LDFLAGS) -o $(LIB).$(MIN) $(OBJECTS) 
 
 $(BASE).c: $(BUILD_DIR)/$(BASE)/include/solver.h
 
@@ -29,10 +30,10 @@ $(BUILD_DIR)/$(BASE)/include/solver.h: $(ARCHIVE)
 $(ARCHIVE):
 	wget -N -O $(ARCHIVE) "http://downloads.sourceforge.net/project/yasudokusolver/yasudokusolver/yass-1.0/yass-1.0.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fyasudokusolver%2Ffiles%2Fyasudokusolver%2F&ts=1395329568&use_mirror=heanet"
 
-CLEAN_LIST = $(OBJECTS) $(BUILD_DIR)/$(BASE)
+CLEAN_LIST = $(OBJECTS) $(BUILD_DIR)/$(BASE) $(LIB).$(MIN)
 
 clean:
-	@- $(RM) -r $(CLEAN_LIST)
+	$(RM) -r $(CLEAN_LIST)
 
 .cpp.o:
 	$(CC) $(CFLAGS) $< -o $@

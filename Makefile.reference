@@ -5,16 +5,17 @@ LDFLAGS=-shared -Wl,-soname,$(LIB) -Wl,--version-script=tss.version
 
 NAME=reference
 VER=1.0
+MIN=0
 LIB=$(NAME).so.$(VER)
 
 BUILD_DIR=build
 SOURCES=solve.c
 OBJECTS=$(SOURCES:.c=.o)
 
-yass: $(OBJECTS)
-	$(CC) $(LDFLAGS) -o $(LIB).0 $(OBJECTS) 
+reference: $(OBJECTS)
+	$(CC) $(LDFLAGS) -o $(LIB).$(MIN) $(OBJECTS) 
 
-CLEAN_LIST = $(OBJECTS)
+CLEAN_LIST = $(OBJECTS) $(LIB).$(MIN)
 
 clean:
 	@- $(RM) -r $(CLEAN_LIST)
