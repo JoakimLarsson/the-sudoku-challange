@@ -31,13 +31,46 @@
 
    Benchmarking
 =================================================================================
- Compiling the program with the BENCH symbol defined:
 
-   M-x compile
-   gcc -DBENCH -o s main.c solve.c; ./s
+ When you have built all the plugins you want you should delete the database and run the solvers 
+ on all the sudoku boards in boards.txt to create a new database with results, for example:
 
- will generate output suitable for a boards.txt file and replace/prepend 
- benchmark figures It will also preserve any comments not exceeding the COMMENT_LENGTH below.
+ rm tss.db
+ ./psolv ./cmankey.lilo.so.1.0.0  
+ ./psolv ./cmankey.so.1.0.0  
+ ./psolv ./reference.so.1.0.0  
+ ./psolv ./sudokusolver.so.0.3.0  
+ ./psolv ./yass.so.1.0.0
+
+ Then create data sets from the database:
+
+ sqlite3 tss.db 'select SOLVER from LAPS GROUP BY SOLVER;'
+
+ You will get a list of the tested solvers, for instance
+
+  Reference
+  Sudoku Solver 0.3
+  Yass 1.0
+  cmankey-1.0
+  cmankey-1.0-lilo
+
+ Choose the solvers you want to compare and generate data files
+
+sqlite3 tss.db 'select avg(TIME),BOARD from LAPS WHERE SOLVER LIKE "Reference" GROUP BY BOARD;' > ref.dat
+sqlite3 tss.db 'select avg(TIME),BOARD from LAPS WHERE SOLVER LIKE "Sudoku Solver 0.3" GROUP BY BOARD;' > solv.dat
+sqlite3 tss.db 'select avg(TIME),BOARD from LAPS WHERE SOLVER LIKE "Yass 1.0" GROUP BY BOARD;' > yass.dat
+
+ Start gnuplot and import the data sets:
+
+   gnuplot
+   set term pdf
+   set output 'report.pdf'
+   plot 'ref.dat' with lines, 'solv.dat' with lines, 'yass.dat' with lines
+   quit
+ 
+ The result is now available in report.pdf, use a pdf viewer to check the results!
+
+ If you enter more Sudoku boards to the boards.txt file, please consider submitting these for others to use.
 
   HAVE FUN!
 
