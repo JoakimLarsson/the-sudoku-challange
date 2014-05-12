@@ -65,6 +65,7 @@ sqlite3 tss.db 'select avg(TIME),BOARD from LAPS WHERE SOLVER LIKE "Yass 1.0" GR
    gnuplot
    set term pdf
    set output 'report.pdf'
+   set logscale y
    plot 'ref.dat' with lines, 'solv.dat' with lines, 'yass.dat' with lines
    quit
  
