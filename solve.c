@@ -1,9 +1,10 @@
 //
-// gcc -DDEBUG -o s solve.c; ./s 
+// g++ -DDEBUG -o s solve.c; ./s
 //
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define update_board(X)     board[X] = num; \
                             col[cols[X]] = col[cols[X]] | (1 << (board[X] - (int) '0') - 1); \
