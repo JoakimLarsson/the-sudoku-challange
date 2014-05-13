@@ -24,7 +24,7 @@
 #define COMMENT_LENGTH 25
 
 extern int store_board(char *board, char *comment);
-extern int store_result(int bid, char *hardware, char *solver, long long diff);
+extern int store_result(int bid, char *hardware, char *solver, long long diff, int rest);
 extern "C" char *solver_name();
 extern "C" void solve_board(char *cp);
 
@@ -141,8 +141,7 @@ main(int argc, char **argv)
     printf("Left:%3u ", left2);
     printf("Solved:%3u\n", left - left2);
 
-    store_result(bid, (char *) "KVM", (*get_name)(), diff);
-
+    store_result(bid, (char *) "KVM", (*get_name)(), diff, left2);
   }
   
   fclose(fp);

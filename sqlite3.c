@@ -34,12 +34,12 @@ int load_result(int bid, char *hardware, char *solver)
  *  diff - integer value describing one meassure execution time for the routine 
  *
  */
-int store_result(int bid, char *hardware, char *solver, long long diff)
+int store_result(int bid, char *hardware, char *solver, long long diff, int rest)
 {
   sqlite3 *db;
   char *zErrMsg = 0;
   int rc;
-  char *sql = (char *) "INSERT INTO LAPS (ID, BOARD, CPU, SOLVER, TIME) VALUES (NULL, %d, \'%s\', \'%s\', %llu);";
+  char *sql = (char *) "INSERT INTO LAPS (ID, BOARD, CPU, SOLVER, TIME, REST) VALUES (NULL, %d, \'%s\', \'%s\', %llu, %d);";
   char qry[1024];
   int id = 0;
   int ret;
@@ -52,7 +52,7 @@ int store_result(int bid, char *hardware, char *solver, long long diff)
     return -1;
   }
 
-  snprintf(qry, sizeof(qry), sql, bid, hardware, solver, diff);
+  snprintf(qry, sizeof(qry), sql, bid, hardware, solver, diff, rest);
   //  printf("%s\n", qry);
   while(1){
     rc = sqlite3_exec(db, qry, callback, 0, &zErrMsg);
@@ -60,7 +60,7 @@ int store_result(int bid, char *hardware, char *solver, long long diff)
       fprintf(stderr, "SQL error: %d - %s\n", rc, zErrMsg);
       sqlite3_free(zErrMsg);
       if (rc == SQLITE_ERROR){
-	char *sql2 = (char *) "CREATE TABLE LAPS(ID INTEGER PRIMARY KEY ASC, BOARD int, CPU text, SOLVER text, TIME int8);";
+	char *sql2 = (char *) "CREATE TABLE LAPS(ID INTEGER PRIMARY KEY ASC, BOARD int, CPU text, SOLVER text, TIME int8, REST int);";
 	rc = sqlite3_exec(db, sql2, callback, 0, &zErrMsg);
 	if( rc != SQLITE_OK ){
 	  fprintf(stderr, "SQL error: %d - %s\n", rc, zErrMsg);
