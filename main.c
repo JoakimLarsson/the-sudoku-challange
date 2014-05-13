@@ -12,6 +12,7 @@
 //
 //
 
+#include <ctype.h>
 #include <dlfcn.h>
 #include <stdio.h>
 #include <inttypes.h>
@@ -79,6 +80,7 @@ main(int argc, char **argv)
   fp = fopen("boards.txt", "r");
 
   while (fgets(board, 1024, fp) != NULL){
+    for (i = 0; i < 81; i++) board[i] = isdigit(board[i]) ? board[i] : '-'; /* Convert from other delimiters to dash */
 #ifdef BENCH
       
     board[81 + COMMENT_LENGTH + 1] = '\0';
