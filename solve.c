@@ -23,7 +23,7 @@ int sqrtopos[9][9] = {
 		    {27, 28, 29, 36, 37, 38, 45, 46, 47},
 		    {30, 31, 32, 39, 40, 41, 48, 49, 50},
 		    {33, 34, 35, 42, 43, 44, 51, 52, 53},
-		    {54, 55, 56, 63, 64, 66, 72, 73, 74},
+		    {54, 55, 56, 63, 64, 65, 72, 73, 74},
 		    {57, 58, 59, 66, 67, 68, 75, 76, 77},
 		    {60, 61, 62, 69, 70, 71, 78, 79, 80} };
 
@@ -40,31 +40,6 @@ char n1[]    = "120453786";
 // Cell to second of two adjacent col/rows in a square
 char n2[]    = "201534867";
 
-inline void update_board2(int pos, 
-		   unsigned int *col, 
-		   unsigned int *row, 
-		   unsigned int *sqr, 
-		   int *cnb, 
-		   char *board, 
-		   unsigned int num)
-{
-  /* update board */
-  board[pos] = num;
-  
-  /* update cross refs */
-  col[cols[pos]] = col[cols[pos]] | (1 << (board[pos] - (int) '0') - 1);
-  row[rows[pos]] = row[rows[pos]] | (1 << (board[pos] - (int) '0') - 1); 
-  sqr[sqrs[pos]] = sqr[sqrs[pos]] | (1 << (board[pos] - (int) '0') - 1);
-
-  /* Update scratchpad */
-  memset(cnb, 0, 81);
-  for (int y = 0; y < 81; y++)
-  {
-    cnb[y] = (board[y] == '-') ? 
-      ((row[rows[y]] | col[cols[y]] | sqr[sqrs[y]]) ^ 0x1ff) & 0x1ff :
-      0x200 | (1 << (board[y] - (int) '0') - 1);
-  }
-}
 
 #if DEBUG | DEBUG1
 
@@ -100,6 +75,34 @@ static void print_board(char *board)
 }
 #endif
 
+inline void update_board2(int pos, 
+		   unsigned int *col, 
+		   unsigned int *row, 
+		   unsigned int *sqr, 
+		   int *cnb, 
+		   char *board, 
+		   unsigned int num)
+{
+  /* update board */
+  board[pos] = num;
+  
+  /* update cross refs */
+  col[cols[pos]] = col[cols[pos]] | (1 << (board[pos] - (int) '0') - 1);
+  row[rows[pos]] = row[rows[pos]] | (1 << (board[pos] - (int) '0') - 1); 
+  sqr[sqrs[pos]] = sqr[sqrs[pos]] | (1 << (board[pos] - (int) '0') - 1);
+
+  /* Update scratchpad */
+  memset(cnb, 0, 81);
+  for (int y = 0; y < 81; y++)
+  {
+    cnb[y] = (board[y] == '-') ? 
+      ((row[rows[y]] | col[cols[y]] | sqr[sqrs[y]]) ^ 0x1ff) & 0x1ff :
+      0x200 | (1 << (board[y] - (int) '0') - 1);
+  }
+
+  print_board(board);
+}
+
 extern "C" char *solver_name(){ return (char *) "Reference"; }
 
 extern "C" void solve_board(char *board)
@@ -119,6 +122,7 @@ extern "C" void solve_board(char *board)
     //    int cocc[9]; // Each number temp storage for in square status
 
     int i, j, k, cn, cnt, fnd, type, afnd, num, a, b, left, cell, ind, res;
+    int ci, ri;
 
     for (i = 0; i < sizeof(sqrs); i++){ sqrs[i] -= (int) '0'; }
     //    for (i = 0; i < sizeof(sqri); i++){ sqri[i] -= (int) '0'; }
@@ -174,7 +178,7 @@ extern "C" void solve_board(char *board)
 #define SINGLE_IN_SQR 2
 
     //printf("\nres:");
-    while (fnd > 0 || type < SINGLE_IN_ROW)
+    while (fnd > 0 || type < SINGLE_IN_SQR)
     {
       DEBUG3(print_board(board););
 
@@ -187,28 +191,28 @@ extern "C" void solve_board(char *board)
       DEBUG3(printf("cnb: "); for (i = 0; i < 81; i++) printf("%s%03x", (i % 9) == 0 ? "\n     " : " ", cnb[i]); printf("\n"););
       DEBUG3(printf("Searching..using %d\n", type););
 
-      for (i = 0; i < 9; i++)
+      for (ci = 0; ci < 9; ci++)
       {
 	int res;
 	//printf("\n");
-	for (j = 0; j < 9; j++)
+	for (ri = 0; ri < 9; ri++)
 	{
-	  if ((cnb[j * 9 + i] & 0x200) == 0)
+	  if ((cnb[ri * 9 + ci] & 0x200) == 0)
 	  {
 	    res = 0;
+	    // Check neigbours in row, col and sqr
 	    for (k = 0; k < 9; k++)
 	    {
 	      switch (type)
 	      {
 	      case SINGLE_IN_COL:
-		res = res | ((k != j) ? cnb[k * 9 + i] : 0); // Collect all cells in column but the current one (i, j)
+		res = res | ((k != ri) ? cnb[k * 9 + ci] : 0); // Collect all cells in column but the current one (ci, ri)
 		break;
 	      case SINGLE_IN_ROW:
-		res = res | ((k != i) ? cnb[j * 9 + k] : 0); // Collect all cells in row but the current one (i, j)
+		res = res | ((k != ci) ? cnb[ri * 9 + k] : 0); // Collect all cells in row but the current one (ci, ri)
 		break;
 	      case SINGLE_IN_SQR:
-		printf("Square To Pos %d/%d => %d => ??\n", k, j, sqrtopos[k][j]);
-		res = res | (((k != i) && (k != j)) ? cnb[sqrtopos[k][j]] : 0); // Collect all cells in sqare but the current one (i, j)
+		res = res | (sqrtopos[sqrs[ri * 9 + ci]][k] != (ri * 9 + ci) ? cnb[sqrtopos[sqrs[ri * 9 + ci]][k]] : 0); // Collect all cells in sqare but the current one (ci, ri)
 		break;
 	      default:
 		printf("Wrong strategy type\n");
@@ -218,15 +222,15 @@ extern "C" void solve_board(char *board)
 	    }
 	    switch((res & 0x1ff) ^ 0x1ff) /* Check if there is single digit that can only fit in the current position */
 	    {
-	    case 0x001: DEBUG3(printf("Found a 1 in pos %d,%d\n", i, j);) num = '1'; update_board(j * 9 + i); break;
-	    case 0x002: DEBUG3(printf("Found a 2 in pos %d,%d\n", i, j);) num = '2'; update_board(j * 9 + i); break;
-	    case 0x004: DEBUG3(printf("Found a 3 in pos %d,%d\n", i, j);) num = '3'; update_board(j * 9 + i); break;
-	    case 0x008: DEBUG3(printf("Found a 4 in pos %d,%d\n", i, j);) num = '4'; update_board(j * 9 + i); break;
-	    case 0x010: DEBUG3(printf("Found a 5 in pos %d,%d\n", i, j);) num = '5'; update_board(j * 9 + i); break;
-	    case 0x020: DEBUG3(printf("Found a 6 in pos %d,%d\n", i, j);) num = '6'; update_board(j * 9 + i); break;
-	    case 0x040: DEBUG3(printf("Found a 7 in pos %d,%d\n", i, j);) num = '7'; update_board(j * 9 + i); break;
-	    case 0x080: DEBUG3(printf("Found a 8 in pos %d,%d\n", i, j);) num = '8'; update_board(j * 9 + i); break;
-	    case 0x100: DEBUG3(printf("Found a 9 in pos %d,%d\n", i, j);) num = '9'; update_board(j * 9 + i); break;
+	    case 0x001: DEBUG3(printf("Found a 1 in pos %d,%d\n", ci, ri);) num = '1'; update_board(ri * 9 + ci); break;
+	    case 0x002: DEBUG3(printf("Found a 2 in pos %d,%d\n", ci, ri);) num = '2'; update_board(ri * 9 + ci); break;
+	    case 0x004: DEBUG3(printf("Found a 3 in pos %d,%d\n", ci, ri);) num = '3'; update_board(ri * 9 + ci); break;
+	    case 0x008: DEBUG3(printf("Found a 4 in pos %d,%d\n", ci, ri);) num = '4'; update_board(ri * 9 + ci); break;
+	    case 0x010: DEBUG3(printf("Found a 5 in pos %d,%d\n", ci, ri);) num = '5'; update_board(ri * 9 + ci); break;
+	    case 0x020: DEBUG3(printf("Found a 6 in pos %d,%d\n", ci, ri);) num = '6'; update_board(ri * 9 + ci); break;
+	    case 0x040: DEBUG3(printf("Found a 7 in pos %d,%d\n", ci, ri);) num = '7'; update_board(ri * 9 + ci); break;
+	    case 0x080: DEBUG3(printf("Found a 8 in pos %d,%d\n", ci, ri);) num = '8'; update_board(ri * 9 + ci); break;
+	    case 0x100: DEBUG3(printf("Found a 9 in pos %d,%d\n", ci, ri);) num = '9'; update_board(ri * 9 + ci); break;
 	    default: break;
 	    }
 	  }
