@@ -12,8 +12,80 @@
 #define DEBUG3(x)  /* */
 #endif
 
-#define update_board(X) update_board2(X, col, row, sqr, cnb, board, num); fnd++;
+#define update_board(X) update_board2(X, col, cols, row, rows, sqr, sqrs, cnb, board, num);
 
+#if DEBUG | DEBUG1
+
+// Test boards
+
+    //char board[] = "123456789123456789123456789123456789123456789123456789123456789123456789123456789";
+    //char board[] = "---------------------------------------------------------------------------------";
+    //char board[] = "---3--67-5--4--8--628---3-----2-4-37---------41-7-5-----2---961--6--1--4-84--9---"; // Time 207
+    //char board[] = "--71-6--24---9------128-63-2--315-6-93-47-----58---7-3----4752-6-5--19-------238-"; // Time: 25 - OK
+    //char board[] = "-17--3-6---2-8--546---2---9--31---7--8-9---2346------11--37-8----4-651--9--------"; // Time: 29 - OK
+    //char board[] = "3----87-------9--41---6---2--5-23-8--7---4-9--6---15--8---5---67--1-------98----5"; // Time 192 (2000 medium) - OK
+    //char board[] = "-2-9--83---7--4--6--5--1-9--3-2----4--6-7-5--1---89-2--4-3--1--8--7--6---72--6-4-"; // Time 29 (2001 medium) -OK
+    //char board[] = "-1---8-5--6--4-7-------2--9-3---1-8-7---6---2-5-97--4-8--3-------9-1--6--4-5---7-";   // Time 209 (2125 medium) - OK
+    //char board[] = "-9--3-6------7-2----48----51--5---8---7---9---3---6--42----17----8-2------6-5--9-";   // Left 44  (2151 medium) -OK
+    //char board[] = "8--6----2-4--5--1----7----3-9---4--62-------87---1--5-3----9----1--8--9-4----2--5"; // Left 56 (insane) 
+    //char board[] = "-6---39--5--1-----8-------7-4-2--6--7-------8--3--9-1-2-------5-----4--3--87---2-"; // Left 43 (hard)
+    //char board[] = "5-64----2-7--9--5-8---5-7--7----3----89-6-37----5----1--3-4---6-5--2--4-9----51-7";
+    char board[] = "-17--3-6---2-8--546---2---9--31---7--8-9---2346------11--37-8----4-651--9--------";
+
+
+static void print_board(char *board)
+{
+    int a, b;
+
+    printf("\n\n");
+    for (a = 0; a < 9; a++)
+    {
+        for (b = 0; b < 9; b++)
+        {
+            printf("%c ",board[a * 9 + b]);
+        }    
+        printf("\n");
+    }
+}
+#endif
+
+static inline void update_board2(
+				 int pos, 
+				 unsigned int *col,
+				 char *cols, 
+				 unsigned int *row,
+				 char *rows,
+				 unsigned int *sqr, 
+				 char *sqrs,
+				 int *cnb, 
+				 char *board, 
+				 unsigned int num)
+{
+
+  /* update board */
+  board[pos] = num;
+  
+  /* update cross refs */
+  col[cols[pos]] = col[cols[pos]] | (1 << (board[pos] - (int) '0') - 1);
+  row[rows[pos]] = row[rows[pos]] | (1 << (board[pos] - (int) '0') - 1); 
+  sqr[sqrs[pos]] = sqr[sqrs[pos]] | (1 << (board[pos] - (int) '0') - 1);
+
+  /* Update scratchpad */
+  memset(cnb, 0, 81 * sizeof(int));
+  for (int y = 0; y < 81; y++)
+  {
+    cnb[y] = (board[y] == '-') ? 
+      ((row[rows[y]] | col[cols[y]] | sqr[sqrs[y]]) ^ 0x1ff) & 0x1ff :
+      0x200 | (1 << (board[y] - (int) '0') - 1);
+  }
+
+  DEBUG3(print_board(board););
+}
+
+extern "C" char *solver_name(){ return (char *) "Ref 1.1"; }
+
+extern "C" void solve_board(char *board)
+{
 // Cell  (0-81) to what square table (0-8) sqr[]
 char sqrs[]     = "000111222000111222000111222333444555333444555333444555666777888666777888666777888";
 int sqrtopos[9][9] = {
@@ -41,75 +113,8 @@ char n1[]    = "120453786";
 char n2[]    = "201534867";
 
 
-#if DEBUG | DEBUG1
-
-// Test boards
-
-    //char board[] = "123456789123456789123456789123456789123456789123456789123456789123456789123456789";
-    //char board[] = "---------------------------------------------------------------------------------";
-    //char board[] = "---3--67-5--4--8--628---3-----2-4-37---------41-7-5-----2---961--6--1--4-84--9---"; // Time 207
-    //char board[] = "--71-6--24---9------128-63-2--315-6-93-47-----58---7-3----4752-6-5--19-------238-"; // Time: 25 - OK
-    //char board[] = "-17--3-6---2-8--546---2---9--31---7--8-9---2346------11--37-8----4-651--9--------"; // Time: 29 - OK
-    //char board[] = "3----87-------9--41---6---2--5-23-8--7---4-9--6---15--8---5---67--1-------98----5"; // Time 192 (2000 medium) - OK
-    //char board[] = "-2-9--83---7--4--6--5--1-9--3-2----4--6-7-5--1---89-2--4-3--1--8--7--6---72--6-4-"; // Time 29 (2001 medium) -OK
-    //char board[] = "-1---8-5--6--4-7-------2--9-3---1-8-7---6---2-5-97--4-8--3-------9-1--6--4-5---7-";   // Time 209 (2125 medium) - OK
-    //char board[] = "-9--3-6------7-2----48----51--5---8---7---9---3---6--42----17----8-2------6-5--9-";   // Left 44  (2151 medium) -OK
-    //char board[] = "8--6----2-4--5--1----7----3-9---4--62-------87---1--5-3----9----1--8--9-4----2--5"; // Left 56 (insane) 
-    //char board[] = "-6---39--5--1-----8-------7-4-2--6--7-------8--3--9-1-2-------5-----4--3--87---2-"; // Left 43 (hard)
-    char board[] = "5-64----2-7--9--5-8---5-7--7----3----89-6-37----5----1--3-4---6-5--2--4-9----51-7";
-
-
-static void print_board(char *board)
-{
-    int a, b;
-
-    printf("\n\n");
-    for (a = 0; a < 9; a++)
-    {
-        for (b = 0; b < 9; b++)
-        {
-            printf("%c ",board[a * 9 + b]);
-        }    
-        printf("\n");
-    }
-}
-#endif
-
-inline void update_board2(int pos, 
-		   unsigned int *col, 
-		   unsigned int *row, 
-		   unsigned int *sqr, 
-		   int *cnb, 
-		   char *board, 
-		   unsigned int num)
-{
-  /* update board */
-  board[pos] = num;
-  
-  /* update cross refs */
-  col[cols[pos]] = col[cols[pos]] | (1 << (board[pos] - (int) '0') - 1);
-  row[rows[pos]] = row[rows[pos]] | (1 << (board[pos] - (int) '0') - 1); 
-  sqr[sqrs[pos]] = sqr[sqrs[pos]] | (1 << (board[pos] - (int) '0') - 1);
-
-  /* Update scratchpad */
-  memset(cnb, 0, 81);
-  for (int y = 0; y < 81; y++)
-  {
-    cnb[y] = (board[y] == '-') ? 
-      ((row[rows[y]] | col[cols[y]] | sqr[sqrs[y]]) ^ 0x1ff) & 0x1ff :
-      0x200 | (1 << (board[y] - (int) '0') - 1);
-  }
-
-  print_board(board);
-}
-
-extern "C" char *solver_name(){ return (char *) "Reference"; }
-
-extern "C" void solve_board(char *board)
-{
-
     // Number of bits in nybble representing 0-8
-    char bits[512];
+    //char bits[512];
 
     // Keep track of what numbers is in what column,row and square
     unsigned int col[9]; // What number in column
@@ -128,10 +133,10 @@ extern "C" void solve_board(char *board)
     //    for (i = 0; i < sizeof(sqri); i++){ sqri[i] -= (int) '0'; }
     for (i = 0; i < sizeof(cols); i++){ cols[i] -= (int) '0'; }
     for (i = 0; i < sizeof(rows); i++){ rows[i] -= (int) '0'; }
-    for (i = 0; i < sizeof(n1); i++){ n1[i] -= (int) '0'; }
-    for (i = 0; i < sizeof(n2); i++){ n2[i] -= (int) '0'; }
+    //for (i = 0; i < sizeof(n1); i++){ n1[i] -= (int) '0'; }
+    //for (i = 0; i < sizeof(n2); i++){ n2[i] -= (int) '0'; }
     //    for (i = 0; i < sizeof(sqrc); i++){ sqrc[i] -= (int) '0'; }
-    for (i = 0; i < sizeof(bits); i++){ bits[i] -= (int) '0'; }
+    //for (i = 0; i < sizeof(bits); i++){ bits[i] -= (int) '0'; }
 
     DEBUG3(print_board(board);)
 
@@ -177,7 +182,6 @@ extern "C" void solve_board(char *board)
 #define SINGLE_IN_ROW 1
 #define SINGLE_IN_SQR 2
 
-    //printf("\nres:");
     while (fnd > 0 || type < SINGLE_IN_SQR)
     {
       DEBUG3(print_board(board););
@@ -194,7 +198,7 @@ extern "C" void solve_board(char *board)
       for (ci = 0; ci < 9; ci++)
       {
 	int res;
-	//printf("\n");
+
 	for (ri = 0; ri < 9; ri++)
 	{
 	  if ((cnb[ri * 9 + ci] & 0x200) == 0)
@@ -222,15 +226,15 @@ extern "C" void solve_board(char *board)
 	    }
 	    switch((res & 0x1ff) ^ 0x1ff) /* Check if there is single digit that can only fit in the current position */
 	    {
-	    case 0x001: DEBUG3(printf("Found a 1 in pos %d,%d\n", ci, ri);) num = '1'; update_board(ri * 9 + ci); break;
-	    case 0x002: DEBUG3(printf("Found a 2 in pos %d,%d\n", ci, ri);) num = '2'; update_board(ri * 9 + ci); break;
-	    case 0x004: DEBUG3(printf("Found a 3 in pos %d,%d\n", ci, ri);) num = '3'; update_board(ri * 9 + ci); break;
-	    case 0x008: DEBUG3(printf("Found a 4 in pos %d,%d\n", ci, ri);) num = '4'; update_board(ri * 9 + ci); break;
-	    case 0x010: DEBUG3(printf("Found a 5 in pos %d,%d\n", ci, ri);) num = '5'; update_board(ri * 9 + ci); break;
-	    case 0x020: DEBUG3(printf("Found a 6 in pos %d,%d\n", ci, ri);) num = '6'; update_board(ri * 9 + ci); break;
-	    case 0x040: DEBUG3(printf("Found a 7 in pos %d,%d\n", ci, ri);) num = '7'; update_board(ri * 9 + ci); break;
-	    case 0x080: DEBUG3(printf("Found a 8 in pos %d,%d\n", ci, ri);) num = '8'; update_board(ri * 9 + ci); break;
-	    case 0x100: DEBUG3(printf("Found a 9 in pos %d,%d\n", ci, ri);) num = '9'; update_board(ri * 9 + ci); break;
+	    case 0x001: DEBUG3(printf("Found a 1 in pos %d,%d\n", ci, ri);) num = '1'; update_board(ri * 9 + ci); fnd++; break;
+	    case 0x002: DEBUG3(printf("Found a 2 in pos %d,%d\n", ci, ri);) num = '2'; update_board(ri * 9 + ci); fnd++; break;
+	    case 0x004: DEBUG3(printf("Found a 3 in pos %d,%d\n", ci, ri);) num = '3'; update_board(ri * 9 + ci); fnd++; break;
+	    case 0x008: DEBUG3(printf("Found a 4 in pos %d,%d\n", ci, ri);) num = '4'; update_board(ri * 9 + ci); fnd++; break;
+	    case 0x010: DEBUG3(printf("Found a 5 in pos %d,%d\n", ci, ri);) num = '5'; update_board(ri * 9 + ci); fnd++; break;
+	    case 0x020: DEBUG3(printf("Found a 6 in pos %d,%d\n", ci, ri);) num = '6'; update_board(ri * 9 + ci); fnd++; break;
+	    case 0x040: DEBUG3(printf("Found a 7 in pos %d,%d\n", ci, ri);) num = '7'; update_board(ri * 9 + ci); fnd++; break;
+	    case 0x080: DEBUG3(printf("Found a 8 in pos %d,%d\n", ci, ri);) num = '8'; update_board(ri * 9 + ci); fnd++; break;
+	    case 0x100: DEBUG3(printf("Found a 9 in pos %d,%d\n", ci, ri);) num = '9'; update_board(ri * 9 + ci); fnd++; break;
 	    default: break;
 	    }
 	  }
