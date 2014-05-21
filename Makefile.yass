@@ -25,7 +25,8 @@ $(BUILD_DIR)/$(BASE)/include/solver.h: $(ARCHIVE)
 	rm -r $(BUILD_DIR)/$(BASE) || true
 	mkdir -p $(BUILD_DIR)
 	cd $(BUILD_DIR); tar xzvf ../$(ARCHIVE)
-	cd $(BUILD_DIR)/$(BASE); wget -O guess http://savannah.gnu.org/cgi-bin/viewcvs/*checkout*/config/config/config.guess; cp guess config.guess
+#	cd $(BUILD_DIR)/$(BASE); wget -O guess http://savannah.gnu.org/cgi-bin/viewcvs/*checkout*/config/config/config.guess; cp guess config.guess
+	cd $(BUILD_DIR)/$(BASE); wget -O guess 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'; cp guess config.guess
 	cd $(BUILD_DIR)/$(BASE); ./configure
 
 $(ARCHIVE):
