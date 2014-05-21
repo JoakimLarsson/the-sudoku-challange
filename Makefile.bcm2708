@@ -1,0 +1,19 @@
+#
+# Ripped from http://mindplusplus.wordpress.com/2013/08/09/accessing-the-raspberry-pis-1mhz-timer-via-kernel-driver/
+#
+# remove any special parameters to Make
+MAKE = make
+ 
+ifneq ($(KERNELRELEASE),)
+      obj-m := bcm2708_usec.o
+else
+	KERNELDIR ?= /lib/modules/$(shell uname -r)/build
+	PWD := $(shell pwd)
+ 
+default:
+	$(MAKE) -C $(KERNELDIR) M=$(PWD) modules
+ 
+endif
+ 
+clean:
+	rm -fv *.ko *.o *.mod.? Module.symvers modules.order
