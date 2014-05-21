@@ -2,6 +2,7 @@
  * This function was ripped from: 
  * http://stackoverflow.com/questions/7935518/is-clock-gettime-adequate-for-submicrosecond-timing
  */
+#if __x86_64
 __inline__ long long get_hrtimer(void) {
   long long lo, hi;
   __asm__ __volatile__ (      // serialize
@@ -11,6 +12,7 @@ __inline__ long long get_hrtimer(void) {
   __asm__ __volatile__ ("rdtsc" : "=a" (lo), "=d" (hi));
   return (long long)hi << 32 | lo;
 }
+#endif
 
 #if 0
 /* Example code for Raspberry PI 1MHz timer ripped from http://mindplusplus.wordpress.com/2013/05/21/accessing-the-raspberry-pis-1mhz-timer/ */
