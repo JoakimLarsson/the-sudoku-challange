@@ -25,6 +25,7 @@ $(BUILD_DIR)/$(BASE)/include/game.h: $(ARCHIVE)
 	rm -r $(BUILD_DIR)/$(BASE) || true
 	mkdir -p $(BUILD_DIR)
 	cd $(BUILD_DIR); tar xzf ../$(ARCHIVE); patch -s -p0 < ../$(BASE).patch
+	cd $(BUILD_DIR)/$(BASE); wget -O guess 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'; cp guess config.guess
 	cd $(BUILD_DIR)/$(BASE); ./configure;
 
 $(ARCHIVE):
