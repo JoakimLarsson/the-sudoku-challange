@@ -12,7 +12,7 @@
 #define DEBUG3(x)  /* */
 #endif
 
-#define update_board(X) update_board2(X, col, cols, row, rows, sqr, sqrs, cnb, board, num);
+#define update_board(X) update_board2(X, col, cols, row, rows, sqr, sqrs, cnb, board, sqrtopos, num);
 
 #if DEBUG | DEBUG1
 
@@ -29,8 +29,8 @@
     //char board[] = "-9--3-6------7-2----48----51--5---8---7---9---3---6--42----17----8-2------6-5--9-";   // Left 44  (2151 medium) -OK
     //char board[] = "8--6----2-4--5--1----7----3-9---4--62-------87---1--5-3----9----1--8--9-4----2--5"; // Left 56 (insane) 
     //char board[] = "-6---39--5--1-----8-------7-4-2--6--7-------8--3--9-1-2-------5-----4--3--87---2-"; // Left 43 (hard)
-    //char board[] = "5-64----2-7--9--5-8---5-7--7----3----89-6-37----5----1--3-4---6-5--2--4-9----51-7";
-    char board[] = "-17--3-6---2-8--546---2---9--31---7--8-9---2346------11--37-8----4-651--9--------";
+    char board[] = "5-64----2-7--9--5-8---5-7--7----3----89-6-37----5----1--3-4---6-5--2--4-9----51-7";
+    //char board[] = "-17--3-6---2-8--546---2---9--31---7--8-9---2346------11--37-8----4-651--9--------";
 
 
 static void print_board(char *board)
@@ -59,26 +59,35 @@ static inline void update_board2(
 				 char *sqrs,
 				 int *cnb, 
 				 char *board, 
+				 int sqrtopos[][9],
 				 unsigned int num)
 {
-
+  int numbit;
   /* update board */
   board[pos] = num;
   
+  numbit = (1 << (board[pos] - (int) '0') - 1);
+
   /* update cross refs */
-  col[cols[pos]] = col[cols[pos]] | (1 << (board[pos] - (int) '0') - 1);
-  row[rows[pos]] = row[rows[pos]] | (1 << (board[pos] - (int) '0') - 1); 
-  sqr[sqrs[pos]] = sqr[sqrs[pos]] | (1 << (board[pos] - (int) '0') - 1);
+  col[cols[pos]] = col[cols[pos]] | numbit; // mark candidate or solution exist in col
+  row[rows[pos]] = row[rows[pos]] | numbit; // mark candidate or solution exist in col
+  sqr[sqrs[pos]] = sqr[sqrs[pos]] | numbit; // mark candidate or solution exist in col
 
   /* Update scratchpad */
-  memset(cnb, 0, 81 * sizeof(int));
-  for (int y = 0; y < 81; y++)
+  numbit = ~numbit & 0x3ff; // Make mask of bit position and preserve solved bit (0x200)
+  for (int k = 0; k < 9; k++)
   {
-    cnb[y] = (board[y] == '-') ? 
-      ((row[rows[y]] | col[cols[y]] | sqr[sqrs[y]]) ^ 0x1ff) & 0x1ff :
-      0x200 | (1 << (board[y] - (int) '0') - 1);
+    cnb[pos % 9 + k  *  9]       &= numbit; // clear candidates in same column as pos
+    cnb[k       + 9 * (pos / 9)] &= numbit; // clear candidates in same row as pos
+    cnb[sqrtopos[sqrs[pos]][k]]  &= numbit; // clear candidates in same square as pos
   }
+  numbit = ~numbit & 0x1ff;   // Make bit position of mask
+  cnb[pos] = 0x200 | numbit;  // Mark position as solved
 
+  DEBUG3(printf("Col: "); for (int i = 0; i < 9; i++) printf("%03x ", col[i]); printf("\n"););
+  DEBUG3(printf("Row: "); for (int i = 0; i < 9; i++) printf("%03x ", row[i]); printf("\n"););
+  DEBUG3(printf("Sqr: "); for (int i = 0; i < 9; i++) printf("%03x ", sqr[i]); printf("\n"););
+  DEBUG3(printf("Cnb: "); for (int i = 0; i < 81; i++) printf("%s%03x", (i % 9) == 0 ? "\n     " : " ", cnb[i]); printf("\n"););
   DEBUG3(print_board(board););
 }
 
@@ -86,8 +95,10 @@ extern "C" char *solver_name(){ return (char *) "Ref 1.1"; }
 
 extern "C" void solve_board(char *board)
 {
-// Cell  (0-81) to what square table (0-8) sqr[]
+// Cell  (0-81) to what square (0-8)
 char sqrs[]     = "000111222000111222000111222333444555333444555333444555666777888666777888666777888";
+
+// pos (0-8) in square (0-8) converted to global pos (0-81)
 int sqrtopos[9][9] = {
                     { 0,  1,  2,  9, 10, 11, 18, 19, 20},
 		    { 3,  4,  5, 12, 13, 14, 21, 22, 23},
@@ -100,10 +111,10 @@ int sqrtopos[9][9] = {
 		    {60, 61, 62, 69, 70, 71, 78, 79, 80} };
 
 
-// Cell (0-81) to column (0-8) col[]                
+// Cell (0-81) to column (0-8)                
 char cols[]     = "012345678012345678012345678012345678012345678012345678012345678012345678012345678";
 
-// Cell (0-81) to row table (0-8) row[]
+// Cell (0-81) to row (0-8)
 char rows[]     = "000000000111111111222222222333333333444444444555555555666666666777777777888888888";
 
 // Cell to first of two adjacent col/rows in a square
@@ -181,6 +192,7 @@ char n2[]    = "201534867";
 #define SINGLE_IN_COL 0
 #define SINGLE_IN_ROW 1
 #define SINGLE_IN_SQR 2
+#define NAKED_IN_COL  3
 
     while (fnd > 0 || type < SINGLE_IN_SQR)
     {
