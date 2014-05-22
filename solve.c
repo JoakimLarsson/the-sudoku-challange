@@ -134,6 +134,7 @@ char n2[]    = "201534867";
     //    unsigned int occ[9]; // What cells are occupied in sqr 
 
     int cnb[81]; // scratchpad
+    unsigned int countbits[512]; // Lookup table for how many set bits there are in a value
 
     //    int cocc[9]; // Each number temp storage for in square status
 
@@ -148,6 +149,13 @@ char n2[]    = "201534867";
     //for (i = 0; i < sizeof(n2); i++){ n2[i] -= (int) '0'; }
     //    for (i = 0; i < sizeof(sqrc); i++){ sqrc[i] -= (int) '0'; }
     //for (i = 0; i < sizeof(bits); i++){ bits[i] -= (int) '0'; }
+
+    // Initiate the bitcount lookup table, shamelessly based on 
+    // http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetTable
+    for (i = 0; i < 512; i++)
+    {
+      countbits[i] = (i & 1) + countbits[i / 2];
+    }
 
     DEBUG3(print_board(board);)
 
@@ -189,10 +197,15 @@ char n2[]    = "201534867";
     fnd = 1;
     type = 0;
 
+// Single out the right value techniques
 #define SINGLE_IN_COL 0
 #define SINGLE_IN_ROW 1
 #define SINGLE_IN_SQR 2
-#define NAKED_IN_COL  3
+
+// Reduction strategies
+#define NAKED_PAIR_IN_COL  30
+#define NAKED_PAIR_IN_ROW  31
+#define NAKED_PAIR_IN_SQR  32
 
     while (fnd > 0 || type < SINGLE_IN_SQR)
     {
@@ -215,39 +228,65 @@ char n2[]    = "201534867";
 	{
 	  if ((cnb[ri * 9 + ci] & 0x200) == 0)
 	  {
-	    res = 0;
-	    // Check neigbours in row, col and sqr
-	    for (k = 0; k < 9; k++)
+	    if (type < NAKED_PAIR_IN_COL) /* find positions with single candidates and promote them to solved */
+	    {
+	      res = 0;
+	      switch (type)
+		{
+		case SINGLE_IN_COL:
+		  for (k = 0; k < 9; k++) { res = res | ((k != ri) ? cnb[k * 9 + ci] : 0); } // Collect all cells in column but the current one (ci, ri)
+		  break;
+		case SINGLE_IN_ROW:
+		  for (k = 0; k < 9; k++) { res = res | ((k != ci) ? cnb[ri * 9 + k] : 0);  }// Collect all cells in row but the current one (ci, ri)
+		  break;
+		case SINGLE_IN_SQR:
+		  for (k = 0; k < 9; k++) { res = res | (sqrtopos[sqrs[ri * 9 + ci]][k] != (ri * 9 + ci) ? cnb[sqrtopos[sqrs[ri * 9 + ci]][k]] : 0); } // Collect all cells in sqare but the current one (ci, ri)
+		  break;
+		default:
+		  printf("Wrong strategy type %d\n", type);
+		  continue;
+		  break;
+		}
+
+	      /* Check if there is single digit that can only fit in the current position */
+	      switch((res & 0x1ff) ^ 0x1ff)
+	      {
+	      case 0x001: num = '1'; break;
+	      case 0x002: num = '2'; break;
+	      case 0x004: num = '3'; break;
+	      case 0x008: num = '4'; break;
+	      case 0x010: num = '5'; break;
+	      case 0x020: num = '6'; break;
+	      case 0x040: num = '7'; break;
+	      case 0x080: num = '8'; break;
+	      case 0x100: num = '9'; break;
+	      default: 	  num = '0'; break;
+	      }
+	      if (num != '0')
+	      {
+		DEBUG3(printf("Found a %c in pos %d,%d\n", num, ci, ri);) ;
+		update_board(ri * 9 + ci); 
+		fnd++;
+	      }
+	    }
+	    else /* Use reduction techniques to enable single candidates */
 	    {
 	      switch (type)
 	      {
-	      case SINGLE_IN_COL:
-		res = res | ((k != ri) ? cnb[k * 9 + ci] : 0); // Collect all cells in column but the current one (ci, ri)
+	      case NAKED_PAIR_IN_COL:
+		/* Find to positions in the same column with the same single two candidates */
 		break;
-	      case SINGLE_IN_ROW:
-		res = res | ((k != ci) ? cnb[ri * 9 + k] : 0); // Collect all cells in row but the current one (ci, ri)
+	      case NAKED_PAIR_IN_ROW:
+		/* Find to positions in the same row with the same single two candidates */
 		break;
-	      case SINGLE_IN_SQR:
-		res = res | (sqrtopos[sqrs[ri * 9 + ci]][k] != (ri * 9 + ci) ? cnb[sqrtopos[sqrs[ri * 9 + ci]][k]] : 0); // Collect all cells in sqare but the current one (ci, ri)
+	      case NAKED_PAIR_IN_SQR:
+		/* Find to positions in the same square with the same single two candidates */
 		break;
 	      default:
-		printf("Wrong strategy type\n");
+		printf("Wrong strategy type %d\n", type);
 		continue;
 		break;
 	      }
-	    }
-	    switch((res & 0x1ff) ^ 0x1ff) /* Check if there is single digit that can only fit in the current position */
-	    {
-	    case 0x001: DEBUG3(printf("Found a 1 in pos %d,%d\n", ci, ri);) num = '1'; update_board(ri * 9 + ci); fnd++; break;
-	    case 0x002: DEBUG3(printf("Found a 2 in pos %d,%d\n", ci, ri);) num = '2'; update_board(ri * 9 + ci); fnd++; break;
-	    case 0x004: DEBUG3(printf("Found a 3 in pos %d,%d\n", ci, ri);) num = '3'; update_board(ri * 9 + ci); fnd++; break;
-	    case 0x008: DEBUG3(printf("Found a 4 in pos %d,%d\n", ci, ri);) num = '4'; update_board(ri * 9 + ci); fnd++; break;
-	    case 0x010: DEBUG3(printf("Found a 5 in pos %d,%d\n", ci, ri);) num = '5'; update_board(ri * 9 + ci); fnd++; break;
-	    case 0x020: DEBUG3(printf("Found a 6 in pos %d,%d\n", ci, ri);) num = '6'; update_board(ri * 9 + ci); fnd++; break;
-	    case 0x040: DEBUG3(printf("Found a 7 in pos %d,%d\n", ci, ri);) num = '7'; update_board(ri * 9 + ci); fnd++; break;
-	    case 0x080: DEBUG3(printf("Found a 8 in pos %d,%d\n", ci, ri);) num = '8'; update_board(ri * 9 + ci); fnd++; break;
-	    case 0x100: DEBUG3(printf("Found a 9 in pos %d,%d\n", ci, ri);) num = '9'; update_board(ri * 9 + ci); fnd++; break;
-	    default: break;
 	    }
 	  }
 	}
