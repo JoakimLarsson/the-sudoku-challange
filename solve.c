@@ -12,8 +12,6 @@
 #define DEBUG3(x)  /* */
 #endif
 
-#define update_board(X) update_board2(X, col, cols, row, rows, sqr, sqrs, cnb, board, sqrtopos, num);
-
 #if DEBUG | DEBUG1
 
 // Test boards
@@ -49,24 +47,35 @@ static void print_board(char *board)
 }
 #endif
 
-static inline void update_board2(
-				 int pos, 
-				 unsigned int *col,
-				 char *cols, 
-				 unsigned int *row,
-				 char *rows,
-				 unsigned int *sqr, 
-				 char *sqrs,
-				 int *cnb, 
-				 char *board, 
-				 int sqrtopos[][9],
-				 unsigned int num)
+static inline void update_board(int pos, char *board, int *cnb, unsigned int num)
 {
   int numbit;
+
   /* update board */
   board[pos] = num;
-  
   numbit = (1 << (board[pos] - (int) '0') - 1);
+  cnb[pos] = 0x200 | numbit;  // Mark position as solved  
+
+  DEBUG3(printf("Cnb: "); for (int i = 0; i < 81; i++) printf("%s%03x", (i % 9) == 0 ? "\n     " : " ", cnb[i]); printf("\n"););
+  DEBUG3(print_board(board););
+}
+
+static inline void reduce_candidates(
+				     int pos, 
+				     unsigned int *col,
+				     char *cols, 
+				     unsigned int *row,
+				     char *rows,
+				     unsigned int *sqr, 
+				     char *sqrs,
+				     int *cnb, 
+				     char *board, 
+				     int sqrtopos[][9],
+				     unsigned int num)
+{
+  int numbit;
+  
+  numbit = (1 << (num - (int) '0') - 1);
 
   /* update cross refs */
   col[cols[pos]] = col[cols[pos]] | numbit; // mark candidate or solution exist in col
@@ -81,14 +90,10 @@ static inline void update_board2(
     cnb[k       + 9 * (pos / 9)] &= numbit; // clear candidates in same row as pos
     cnb[sqrtopos[sqrs[pos]][k]]  &= numbit; // clear candidates in same square as pos
   }
-  numbit = ~numbit & 0x1ff;   // Make bit position of mask
-  cnb[pos] = 0x200 | numbit;  // Mark position as solved
 
   DEBUG3(printf("Col: "); for (int i = 0; i < 9; i++) printf("%03x ", col[i]); printf("\n"););
   DEBUG3(printf("Row: "); for (int i = 0; i < 9; i++) printf("%03x ", row[i]); printf("\n"););
   DEBUG3(printf("Sqr: "); for (int i = 0; i < 9; i++) printf("%03x ", sqr[i]); printf("\n"););
-  DEBUG3(printf("Cnb: "); for (int i = 0; i < 81; i++) printf("%s%03x", (i % 9) == 0 ? "\n     " : " ", cnb[i]); printf("\n"););
-  DEBUG3(print_board(board););
 }
 
 extern "C" char *solver_name(){ return (char *) "Ref 1.1"; }
@@ -265,7 +270,9 @@ char n2[]    = "201534867";
 	      if (num != '0')
 	      {
 		DEBUG3(printf("Found a %c in pos %d,%d\n", num, ci, ri);) ;
-		update_board(ri * 9 + ci); 
+
+		reduce_candidates( ri * 9 + ci, col, cols, row, rows, sqr, sqrs, cnb, board, sqrtopos, num);
+		update_board( ri * 9 + ci, board, cnb, num);
 		fnd++;
 	      }
 	    }
