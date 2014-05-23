@@ -79,8 +79,8 @@ static inline void reduce_candidates(
 
   /* update cross refs */
   col[cols[pos]] = col[cols[pos]] | numbit; // mark candidate or solution exist in col
-  row[rows[pos]] = row[rows[pos]] | numbit; // mark candidate or solution exist in col
-  sqr[sqrs[pos]] = sqr[sqrs[pos]] | numbit; // mark candidate or solution exist in col
+  row[rows[pos]] = row[rows[pos]] | numbit; // mark candidate or solution exist in row
+  sqr[sqrs[pos]] = sqr[sqrs[pos]] | numbit; // mark candidate or solution exist in sqr
 
   /* Update scratchpad */
   numbit = ~numbit & 0x3ff; // Make mask of bit position and preserve solved bit (0x200)
@@ -208,16 +208,17 @@ char n2[]    = "201534867";
 #define SINGLE_IN_SQR 2
 
 // Reduction strategies
-#define NAKED_PAIR_IN_COL  30
-#define NAKED_PAIR_IN_ROW  31
-#define NAKED_PAIR_IN_SQR  32
+#define NAKED_PAIR_IN_COL  3
+#define NAKED_PAIR_IN_ROW  4
+#define NAKED_PAIR_IN_SQR  5
 
-    while (fnd > 0 || type < SINGLE_IN_SQR)
+    while (fnd > 0 || type < NAKED_PAIR_IN_COL)
     {
       DEBUG3(print_board(board););
-
+      DEBUG3(printf("Type:%d Fnd:%d\n", type, fnd););
       type = (fnd == 0) ? type + 1 : 0;
       fnd = 0;
+      DEBUG3(printf("Type:%d Fnd:%d\n", type, fnd););
 
       DEBUG3(printf("col: "); for (i = 0; i < 9; i++) printf("%03x ", col[i]); printf("\n"););
       DEBUG3(printf("row: "); for (i = 0; i < 9; i++) printf("%03x ", row[i]); printf("\n"););
@@ -249,6 +250,7 @@ char n2[]    = "201534867";
 		  break;
 		default:
 		  printf("Wrong strategy type %d\n", type);
+
 		  continue;
 		  break;
 		}
@@ -282,6 +284,32 @@ char n2[]    = "201534867";
 	      {
 	      case NAKED_PAIR_IN_COL:
 		/* Find to positions in the same column with the same single two candidates */
+		if (countbits[cnb[ri * 9 + ci]] == 2)
+		{
+		  for (k = 0; k < 9; k++)
+		  {
+		    if (k != ri && countbits[cnb[k * 9 + ci]] == 2 && cnb[k * 9 + ci] == cnb[ri * 9 + ci])
+		    {
+		      int numbit;
+
+		      printf("Found %03x in both (%d/%d) and (%d/%d)\n", cnb[ri * 9 + ci], ri, ci, k, ci);
+		      /* Update scratchpad */
+		      numbit = ~cnb[ri * 9 + ci] & 0x3ff; // Make mask of bit position and preserve solved bit (0x200)
+		      for (int r = 0; r < 9; r++)
+		      {
+			if (r != k && r != ri)
+			{
+			  fnd = fnd + (cnb[r  *  9 + ci] & (~numbit & 0x1ff)) ? 1 : 0;
+			  DEBUG3(printf("FND:%d\n", fnd););
+			  cnb[r  *  9 + ci] &= numbit; // clear candidates in same column as pos
+			}
+		      }
+		      //		      type = 0;
+		      //		      fnd++;
+		      DEBUG3(printf("Cnb: "); for (i = 0; i < 81; i++) printf("%s%03x", (i % 9) == 0 ? "\n     " : " ", cnb[i]); printf("\n"););
+		    }
+		  }  
+		}
 		break;
 	      case NAKED_PAIR_IN_ROW:
 		/* Find to positions in the same row with the same single two candidates */
