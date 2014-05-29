@@ -12,7 +12,9 @@ BUILD_DIR=build
 SOURCES=solve.c
 OBJECTS=$(SOURCES:.c=.o)
 
-reference: $(OBJECTS)
+reference:  $(LIB).$(MIN)
+
+$(LIB).$(MIN): $(OBJECTS)
 	$(CC) $(LDFLAGS) -o $(LIB).$(MIN) $(OBJECTS) 
 
 CLEAN_LIST = $(OBJECTS) $(LIB).$(MIN)
