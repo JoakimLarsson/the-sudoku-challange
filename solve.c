@@ -314,7 +314,8 @@ char n2[]    = "201534867";
 		/* Find to positions in the same column with the same single two candidates */
 		if (countbits[cnb[ri * 9 + ci]] == 2)
 		{
-		  for (k = 0; k < 9; k++)
+		  // for (k = 0; k < 9; k++)
+		  for (k = ri; k < 9; k++)
 		  {
 		    if (k != ri && countbits[cnb[k * 9 + ci] & 0x1ff] == 2 && cnb[k * 9 + ci] == cnb[ri * 9 + ci])
 		    {
@@ -328,13 +329,9 @@ char n2[]    = "201534867";
 			if (r != k && r != ri)
 			{
 			  fnd = fnd + (cnb[r  *  9 + ci] & (~numbit & 0x1ff)) ? 1 : 0;
-			  DEBUG3(printf("FND:%d\n", fnd););
 			  cnb[r  *  9 + ci] &= numbit; // clear candidates in same column as pos
 			}
 		      }
-		      //		      type = 0;
-		      //		      fnd++;
-		      DEBUG3(printf("Cnb: "); for (i = 0; i < 81; i++) printf("%s%03x", (i % 9) == 0 ? "\n     " : " ", cnb[i]); printf("\n"););
 		    }
 		  }  
 		}
@@ -343,7 +340,8 @@ char n2[]    = "201534867";
 		/* Find to positions in the same row with the same single two candidates */
 		if (countbits[cnb[ri * 9 + ci]] == 2)
 		{
-		  for (k = 0; k < 9; k++)
+		  // for (k = 0; k < 9; k++)
+		  for (k = ci; k < 9; k++)
 		  {
 		    if (k != ci && countbits[cnb[ri * 9 + k] & 0x1ff] == 2 && cnb[ri * 9 + k] == cnb[ri * 9 + ci])
 		    {
@@ -357,13 +355,9 @@ char n2[]    = "201534867";
 			if (c != k && c != ci)
 			{
 			  fnd = fnd + (cnb[ri  *  9 + c] & (~numbit & 0x1ff)) ? 1 : 0;
-			  DEBUG3(printf("FND:%d\n", fnd););
 			  cnb[ri  *  9 + c] &= numbit; // clear candidates in same row as pos
 			}
 		      }
-		      //		      type = 0;
-		      //		      fnd++;
-		      DEBUG3(printf("Cnb: "); for (i = 0; i < 81; i++) printf("%s%03x", (i % 9) == 0 ? "\n     " : " ", cnb[i]); printf("\n"););
 		    }
 		  }  
 		}
@@ -372,40 +366,28 @@ char n2[]    = "201534867";
 		/* Find to positions in the same square with the same single two candidates */
 		if (countbits[cnb[ri * 9 + ci]] == 2)
 		{
-		  DEBUG3(printf("Checking square with pos %d\n", ri * 9 + ci););
 		  for (k = 0; k < 9; k++)
 		  {
-		    DEBUG4(printf("ref pos %d -> square %d + k -> pos %d\n", ri * 9 + ci, sqrs[ri * 9 + ci], sqrtopos[sqrs[ri * 9 + ci]][k]););
 		    if (ri * 9 + ci != sqrtopos[sqrs[ri * 9 + ci]][k] &&                   // Not the same square 
 			countbits[cnb[sqrtopos[sqrs[ri * 9 + ci]][k]] & 0x1ff] == 2 &&  // same bitcount
 			cnb[sqrtopos[sqrs[ri * 9 + ci]][k]] == cnb[ri * 9 + ci])        // same bits 
 		    {
 		      int numbit;
 
-		      DEBUG3(printf("Found %03x in both (%d/%d) and (%d/%d), masking out candidates\n", cnb[ri * 9 + ci], ri, ci, rows[sqrtopos[sqrs[ri * 9 + ci]][k]], cols[sqrtopos[sqrs[ri * 9 + ci]][k]]););
+		      DEBUG3(printf("Found %03x in both (%d/%d) and (%d/%d), masking out candidates\n", 
+				    cnb[ri * 9 + ci], ri, ci, 
+				    rows[sqrtopos[sqrs[ri * 9 + ci]][k]], 
+				    cols[sqrtopos[sqrs[ri * 9 + ci]][k]]););
 		      /* Update scratchpad */
 		      numbit = ~cnb[ri * 9 + ci] & 0x3ff; // Make mask of bit position and preserve solved bit (0x200)
 		      for (int s = 0; s < 9; s++) // Go over square to mask all but the two found positions
 		      {
-			DEBUG4(printf("  mask %03x for pos %d ", numbit,sqrtopos[sqrs[ri * 9 + ci]][s]););
-			/*			printf("s: %d k: %d ci: %d sqrs: %d - global pos ri ci: %d global pos k: %d", 
-			       s, 
-			       sqrp[sqrtopos[sqrs[ri * 9 + ci]][k]], 
-			            sqrp[sqrtopos[sqrs[ri * 9 + ci]][ci]], 
-				    sqrs[ri * 9 + ci], ri * 9 + ci, sqrtopos[sqrs[ri * 9 + ci]][k]); */
-			// if (s != sqrp[sqrtopos[sqrs[ri * 9 + ci]][k]] && s != sqrp[sqrtopos[sqrs[ri * 9 + ci]][ci]])
 			if (ri * 9 + ci != sqrtopos[sqrs[ri * 9 + ci]][s] && s != k)
 			{
-			  DEBUG4(printf(" ok\n");)
 			  fnd = fnd + (cnb[sqrtopos[sqrs[ri * 9 + ci]][s]] & (~numbit & 0x1ff)) ? 1 : 0;
-			  DEBUG3(printf("FND:%d\n", fnd););
 			  cnb[sqrtopos[sqrs[ri * 9 + ci]][s]] &= numbit; // clear candidates in same row as pos
 			}
-			DEBUG4(else printf(" not\n"););
 		      }
-		      //		      type = 0;
-		      //		      fnd++;
-		      DEBUG3(printf("Cnb: "); for (i = 0; i < 81; i++) printf("%s%03x", (i % 9) == 0 ? "\n     " : " ", cnb[i]); printf("\n"););
 		    }
 		  }  
 		}
