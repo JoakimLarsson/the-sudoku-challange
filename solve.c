@@ -8,29 +8,27 @@
 
 #ifdef DEBUG
 #define DEBUG3(x) x
-#define DEBUG4(x) 
+#define DEBUG4(x) x
+#else
+#ifdef DEBUG2
+#define DEBUG3(x) x
+#define DEBUG4(x) x
 #else
 #define DEBUG3(x)  /* */
 #define DEBUG4(x)  /* */
 #endif
+#endif
 
-#if DEBUG | DEBUG1
+
+#if DEBUG | DEBUG1| DEBUG2
 
 // Test boards
 
     //char board[] = "123456789123456789123456789123456789123456789123456789123456789123456789123456789";
     //char board[] = "---------------------------------------------------------------------------------";
-    //char board[] = "---3--67-5--4--8--628---3-----2-4-37---------41-7-5-----2---961--6--1--4-84--9---"; // Time 207
-    //char board[] = "--71-6--24---9------128-63-2--315-6-93-47-----58---7-3----4752-6-5--19-------238-"; // Time: 25 - OK
-    //char board[] = "-17--3-6---2-8--546---2---9--31---7--8-9---2346------11--37-8----4-651--9--------"; // Time: 29 - OK
-    //char board[] = "3----87-------9--41---6---2--5-23-8--7---4-9--6---15--8---5---67--1-------98----5"; // Time 192 (2000 medium) - OK
-    //char board[] = "-2-9--83---7--4--6--5--1-9--3-2----4--6-7-5--1---89-2--4-3--1--8--7--6---72--6-4-"; // Time 29 (2001 medium) -OK
-    //char board[] = "-1---8-5--6--4-7-------2--9-3---1-8-7---6---2-5-97--4-8--3-------9-1--6--4-5---7-";   // Time 209 (2125 medium) - OK
-    //char board[] = "-9--3-6------7-2----48----51--5---8---7---9---3---6--42----17----8-2------6-5--9-";   // Left 44  (2151 medium) -OK
     //char board[] = "8--6----2-4--5--1----7----3-9---4--62-------87---1--5-3----9----1--8--9-4----2--5"; // Left 56 (insane) 
-    //char board[] = "-6---39--5--1-----8-------7-4-2--6--7-------8--3--9-1-2-------5-----4--3--87---2-"; // Left 43 (hard)
-    char board[] = "5-64----2-7--9--5-8---5-7--7----3----89-6-37----5----1--3-4---6-5--2--4-9----51-7";
-    //char board[] = "-17--3-6---2-8--546---2---9--31---7--8-9---2346------11--37-8----4-651--9--------";
+    char board[] = "5-64----2-7--9--5-8---5-7--7----3----89-6-37----5----1--3-4---6-5--2--4-9----51-7"; // A test board fro solve.c
+//char board[] = "-6---39--5--1-----8-------7-4-2--6--7-------8--3--9-1-2-------5-----4--3--87---2-"; // Left 43 (hard)
 
 
 static void print_board(char *board)
@@ -118,7 +116,7 @@ static inline void reduce_candidates(
   DEBUG3(printf("Sqr: "); for (int i = 0; i < 9; i++) printf("%03x ", sqr[i]); printf("\n"););
 }
 
-extern "C" char *solver_name(){ return (char *) "Ref 1.1"; }
+extern "C" char *solver_name(){ return (char *) "Ref 1.2"; }
 
 extern "C" void solve_board(char *board)
 {
@@ -183,10 +181,11 @@ char n2[]    = "201534867";
 
     // Initiate the bitcount lookup table, shamelessly based on 
     // http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetTable
+    memset(countbits, 0, sizeof(countbits));
     for (i = 0; i < 512; i++)
     {
       countbits[i] = (i & 1) + countbits[i / 2];
-      //      printf("%03x:%d%s", i, countbits[i], ((i + 1) % 16) == 0 ? "\n" : " ");
+      //printf("%03x:%d%s", i, countbits[i], ((i + 1) % 16) == 0 ? "\n" : " ");
     }
 
     DEBUG3(print_board(board);)
@@ -212,6 +211,9 @@ char n2[]    = "201534867";
             left++;            
         }
     }
+    DEBUG3(printf("col: "); for (i = 0; i < 9; i++) printf("%03x ", col[i]); printf("\n"););
+    DEBUG3(printf("row: "); for (i = 0; i < 9; i++) printf("%03x ", row[i]); printf("\n"););
+    DEBUG3(printf("sqr: "); for (i = 0; i < 9; i++) printf("%03x ", sqr[i]); printf("\n"););
 
     memset(cnb, 0, sizeof(cnb));
     for (i = 0; i < 81; i++)
@@ -226,7 +228,7 @@ char n2[]    = "201534867";
       }
     }
 
-    DEBUG3(print_candidates(cnb););
+    DEBUG4(print_candidates(cnb););
 
     fnd = 1;
     type = 0;
@@ -263,7 +265,18 @@ char n2[]    = "201534867";
 
 	for (ri = 0; ri < 9; ri++)
 	{
+#if 0
+	  if (countbits[cnb[ri * 9 + ci] & 0x1ff] == 1)
+	  {
+	    if ((cnb[ri * 9 + ci] & 0x200) == 0)
+	    {
+	      update_board( ri * 9 + ci, board, cnb, num);
+	    }
+	  }
+	  else
+#else
 	  if ((cnb[ri * 9 + ci] & 0x200) == 0)
+#endif
 	  {
 	    if (type < NAKED_PAIR_IN_COL) /* find positions with single candidates and promote them to solved */
 	    {
@@ -410,12 +423,12 @@ char n2[]    = "201534867";
 			if (countbits[mask] == 3)
 			{
 			  mask = (~mask) & 0x3ff;
-			  printf("Found Triple at %d/%d, %d/%d and %d/%d\n", ci, ri, ci, k1, ci, k2);
+			  DEBUG4(printf("Found Triple at %d/%d, %d/%d and %d/%d\n", ci, ri, ci, k1, ci, k2););
 			  for (int k3 = 0; k3 < 9; k3++)
 			  {
 			    if (k3 != ri && k3 != k1 && k3 != k2)
 			    {
-			      printf("  Masking %d/%d\n2", ci, k3);
+			      DEBUG4(printf("  Masking %d/%d\n2", ci, k3););
 			      fnd = fnd + (cnb[k3  *  9 + ci] & (~mask & 0x1ff)) ? 1 : 0;
 			      cnb[k3 * 9 + ci] &= mask;
 			    }

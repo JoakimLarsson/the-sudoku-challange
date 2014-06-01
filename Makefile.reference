@@ -1,11 +1,12 @@
 
 CC=g++
 CFLAGS=-c -fPIC 
+#CFLAGS=-c -fPIC -DDEBUG2
 LDFLAGS=-shared -Wl,-soname,$(LIB) -Wl,--version-script=tss.version
 
 NAME=reference
 VER=1.2
-MIN=0
+MIN=2
 LIB=$(NAME).so.$(VER)
 
 BUILD_DIR=build
