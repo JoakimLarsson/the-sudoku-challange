@@ -4,8 +4,8 @@ CFLAGS=-c -fPIC
 LDFLAGS=-shared -Wl,-soname,$(LIB) -Wl,--version-script=tss.version
 
 NAME=reference
-VER=1.1
-MIN=2
+VER=1.2
+MIN=0
 LIB=$(NAME).so.$(VER)
 
 BUILD_DIR=build

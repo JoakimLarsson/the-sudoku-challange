@@ -240,8 +240,11 @@ char n2[]    = "201534867";
 #define NAKED_PAIR_IN_COL  3
 #define NAKED_PAIR_IN_ROW  4
 #define NAKED_PAIR_IN_SQR  5
+#define NAKED_TRIPLE_IN_COL  6
+#define NAKED_TRIPLE_IN_ROW  7
+#define NAKED_TRIPLE_IN_SQR  8
 
-    while (fnd > 0 || type < NAKED_PAIR_IN_SQR)
+    while (fnd > 0 || type < NAKED_TRIPLE_IN_COL)
     {
       DEBUG4(print_board(board););
       type = (fnd == 0) ? type + 1 : 0;
@@ -390,6 +393,37 @@ char n2[]    = "201534867";
 		      }
 		    }
 		  }  
+		}
+		break;
+	      case NAKED_TRIPLE_IN_COL:
+		/* Find to positions in the same square with the same single two candidates */
+		if (countbits[cnb[ri * 9 + ci]] <= 3)
+		{
+		  for (int k1 = ri + 1; k1 < 9; k1++)
+		  {
+		    for (int k2 = k1 + 1; k2 < 9; k2++)
+		    {
+		      if (countbits[cnb[k1 * 9 + ci]] <= 3 &&
+			  countbits[cnb[k2 * 9 + ci]] <= 3)
+		      {
+			int mask = cnb[ri * 9 + ci] | cnb[k1 * 9 + ci] | cnb[k2 * 9 + ci];
+			if (countbits[mask] == 3)
+			{
+			  mask = (~mask) & 0x3ff;
+			  printf("Found Triple at %d/%d, %d/%d and %d/%d\n", ci, ri, ci, k1, ci, k2);
+			  for (int k3 = 0; k3 < 9; k3++)
+			  {
+			    if (k3 != ri && k3 != k1 && k3 != k2)
+			    {
+			      printf("  Masking %d/%d\n2", ci, k3);
+			      fnd = fnd + (cnb[k3  *  9 + ci] & (~mask & 0x1ff)) ? 1 : 0;
+			      cnb[k3 * 9 + ci] &= mask;
+			    }
+			  }
+			}
+		      }
+		    }
+		  }
 		}
 		break;
 	      default:
