@@ -26,8 +26,8 @@
 
     //char board[] = "123456789123456789123456789123456789123456789123456789123456789123456789123456789";
     //char board[] = "---------------------------------------------------------------------------------";
-    //char board[] = "8--6----2-4--5--1----7----3-9---4--62-------87---1--5-3----9----1--8--9-4----2--5"; // Left 56 (insane) 
-    char board[] = "5-64----2-7--9--5-8---5-7--7----3----89-6-37----5----1--3-4---6-5--2--4-9----51-7"; // A test board fro solve.c
+    char board[] = "8--6----2-4--5--1----7----3-9---4--62-------87---1--5-3----9----1--8--9-4----2--5"; // Left 56 (insane) 
+    //char board[] = "5-64----2-7--9--5-8---5-7--7----3----89-6-37----5----1--3-4---6-5--2--4-9----51-7"; // A test board fro solve.c
 //char board[] = "-6---39--5--1-----8-------7-4-2--6--7-------8--3--9-1-2-------5-----4--3--87---2-"; // Left 43 (hard)
 
 
@@ -234,17 +234,18 @@ char n2[]    = "201534867";
     type = 0;
 
 // Single out the right value techniques
-#define SINGLE_IN_COL 0
-#define SINGLE_IN_ROW 1
-#define SINGLE_IN_SQR 2
+#define SINGLE_IN_COL  0
+#define SINGLE_IN_ROW  1
+#define SINGLE_IN_SQR  2
 
 // Reduction strategies
-#define NAKED_PAIR_IN_COL  3
-#define NAKED_PAIR_IN_ROW  4
-#define NAKED_PAIR_IN_SQR  5
-#define NAKED_TRIPLE_IN_COL  6
-#define NAKED_TRIPLE_IN_ROW  7
-#define NAKED_TRIPLE_IN_SQR  8
+#define NAKED_PAIR_IN_COL  4
+#define NAKED_PAIR_IN_ROW  5
+#define NAKED_PAIR_IN_SQR  6
+#define NAKED_TRIPLE_IN_COL  7
+#define NAKED_TRIPLE_IN_ROW  8
+#define NAKED_TRIPLE_IN_SQR  9
+#define REDUCED_SINGLE 3
 
     while (fnd > 0 || type < NAKED_TRIPLE_IN_COL)
     {
@@ -265,20 +266,14 @@ char n2[]    = "201534867";
 
 	for (ri = 0; ri < 9; ri++)
 	{
-#if 0
-	  if (countbits[cnb[ri * 9 + ci] & 0x1ff] == 1)
+	  if (countbits[cnb[ri * 9 + ci] & 0x3ff] == 1)
 	  {
-	    if ((cnb[ri * 9 + ci] & 0x200) == 0)
-	    {
-	      update_board( ri * 9 + ci, board, cnb, num);
-	    }
+	    DEBUG3(printf("REDUCED_SINGLE: %d\n", countbits[cnb[ri * 9 + ci]]););
+	    type = REDUCED_SINGLE;
 	  }
-	  else
-#else
 	  if ((cnb[ri * 9 + ci] & 0x200) == 0)
-#endif
 	  {
-	    if (type < NAKED_PAIR_IN_COL) /* find positions with single candidates and promote them to solved */
+	    if (type < REDUCED_SINGLE) /* find positions with single candidates and promote them to solved */
 	    {
 	      res = 0;
 	      switch (type)
@@ -438,6 +433,22 @@ char n2[]    = "201534867";
 		    }
 		  }
 		}
+		break;
+	      case REDUCED_SINGLE:
+		{
+		  char num = '0';
+		  res = cnb[ri * 9 + ci] & 0x1ff;
+		  while (res)
+		  {
+		    num++;
+		    res = res >> 1;
+		  }
+		  DEBUG3(printf("Reduced single: %d/%d: %03x to a %c\n", ci, ri, cnb[ri * 9 + ci], num););
+		  reduce_candidates( ri * 9 + ci, col, cols, row, rows, sqr, sqrs, cnb, board, sqrtopos, num);
+		  update_board(ri * 9 + ci, board, cnb, num);
+		  fnd++;
+		}
+		type = 0;
 		break;
 	      default:
 		printf("Wrong strategy type %d\n", type);
