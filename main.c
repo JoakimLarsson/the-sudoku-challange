@@ -18,6 +18,7 @@
 #include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/utsname.h>
 
 #include "hrtimer.h"
 
@@ -75,7 +76,11 @@ main(int argc, char **argv)
   char *(*get_name)(void);
   char * error;
 
-  
+  struct utsname sys;
+  char name[80];
+
+  uname(&sys);
+  snprintf(name, sizeof(name), "%s %s", sys.sysname, sys.machine);
 
   fp = fopen("boards.txt", "r");
 
@@ -141,7 +146,7 @@ main(int argc, char **argv)
     printf("Left:%3u ", left2);
     printf("Solved:%3u\n", left - left2);
 
-    store_result(bid, (char *) "KVM", (*get_name)(), diff, left2);
+    store_result(bid, name, (*get_name)(), diff, left2);
   }
   
   fclose(fp);
