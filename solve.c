@@ -249,7 +249,7 @@ char n2[]    = "201534867";
 #define NAKED_TRIPLE_IN_SQR  9
 #define REDUCED_SINGLE 3
 
-    while (fnd > 0 || type < NAKED_TRIPLE_IN_COL)
+    while (fnd > 0 || type < NAKED_TRIPLE_IN_ROW)
     {
       DEBUG4(print_board(board););
       type = (fnd == 0) ? type + 1 : 0;
@@ -433,6 +433,77 @@ char n2[]    = "201534867";
 			  }
 			}
 		      }
+		    }
+		  }
+		}
+		break;
+	      case NAKED_TRIPLE_IN_ROW:
+		/* Find to positions in the same square with the same single two candidates */
+		if (countbits[cnb[ri * 9 + ci]] <= 3)
+		{
+		  for (int k1 = ci + 1; k1 < 9; k1++)
+		  {
+		    for (int k2 = k1 + 1; k2 < 9; k2++)
+		    {
+		      if (countbits[cnb[ri * 9 + k1]] <= 3 &&
+			  countbits[cnb[ri * 9 + k2]] <= 3)
+		      {
+			int mask = cnb[ri * 9 + ci] | cnb[ri * 9 + k1] | cnb[ri * 9 + k2];
+			if (countbits[mask] == 3)
+			{
+			  mask = (~mask) & 0x3ff;
+			  DEBUG4(printf("Found Triple in row at %d/%d, %d/%d and %d/%d\n", ci, ri, k1, ri, k2, ri););
+			  for (int k3 = 0; k3 < 9; k3++)
+			  {
+			    if (k3 != ci && k3 != k1 && k3 != k2)
+			    {
+			      DEBUG4(printf("  Masking %d/%d\n2", ri, k3););
+			      fnd = fnd + (cnb[ri  *  9 + k3] & (~mask & 0x1ff)) ? 1 : 0;
+			      cnb[ri * 9 + k3] &= mask;
+			    }
+			  }
+			}
+		      }
+		    }
+		  }
+		}
+		break;
+	      case NAKED_TRIPLE_IN_SQR:
+		/* Find to positions in the same square with the same single two candidates */
+		if (countbits[cnb[ri * 9 + ci]] <= 3)
+		{
+		  printf("Suspecting triple at %d/%d\n", ci, ri);
+		  for (int k1 = 0; k1 < 9; k1++)
+		  {
+		    for (int k2 = k1 + 1; k2 < 9; k2++)
+		    {
+		      printf("  Checking out pos %d and %d - ", 
+			     sqrtopos[sqrs[ri * 9 + ci]][k1],  sqrtopos[sqrs[ri * 9 + ci]][k2]);
+		      if (ri * 9 + ci != sqrtopos[sqrs[ri * 9 + ci]][k1] &&  
+			  ri * 9 + ci != sqrtopos[sqrs[ri * 9 + ci]][k2] &&
+			  countbits[cnb[sqrtopos[sqrs[ri * 9 + ci]][k1]] & 0x1ff] <= 3 &&
+			  countbits[cnb[sqrtopos[sqrs[ri * 9 + ci]][k2]] & 0x1ff] <= 3)
+		      {
+			printf("Looks good - ");
+			int mask = cnb[ri * 9 + ci] | cnb[sqrtopos[sqrs[ri * 9 + ci]][k1]] | cnb[sqrtopos[sqrs[ri * 9 + ci]][k2]];
+			if (countbits[mask] == 3)
+			{
+			  mask = (~mask) & 0x3ff;
+			  DEBUG4(printf("Found Triple in sqr at %d/%d, %d/%d and %d/%d\n", ci, ri, 
+					sqrtopos[sqrs[ri * 9 + ci]][k1] % 9, sqrtopos[sqrs[ri * 9 + ci]][k1] / 9, 
+					sqrtopos[sqrs[ri * 9 + ci]][k2] % 9, sqrtopos[sqrs[ri * 9 + ci]][k2] / 9););
+			  for (int k3 = 0; k3 < 9; k3++)
+			  {
+			    if (k3 != ri && k3 != k1 && k3 != k2)
+			    {
+			      DEBUG4(printf("  Masking %d/%d\n2", sqrtopos[sqrs[ri * 9 + ci]][k3] % 9, sqrtopos[sqrs[ri * 9 + ci]][k3] / 9););
+			      fnd = fnd + (cnb[sqrtopos[sqrs[ri * 9 + ci]][k3]] & (~mask & 0x1ff)) ? 1 : 0;
+			      cnb[sqrtopos[sqrs[ri * 9 + ci]][k3]] &= mask;
+			    }
+			  }
+			}
+		      }
+		      printf("\n");
 		    }
 		  }
 		}
