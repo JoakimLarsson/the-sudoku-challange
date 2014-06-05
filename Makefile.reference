@@ -6,7 +6,7 @@ LDFLAGS=-shared -Wl,-soname,$(LIB) -Wl,--version-script=tss.version
 
 NAME=reference
 VER=1.2
-MIN=2
+MIN=3
 LIB=$(NAME).so.$(VER)
 
 BUILD_DIR=build

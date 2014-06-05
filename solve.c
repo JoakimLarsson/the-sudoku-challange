@@ -7,9 +7,11 @@
 #include <stdlib.h>
 
 #ifdef DEBUG
-#define DEBUG3(x) x
-#define DEBUG4(x) x
+#define DEBUG3(x)
+#define DEBUG4(x)
 #else
+
+/* Debug statements as plugin */
 #ifdef DEBUG2
 #define DEBUG3(x) x
 #define DEBUG4(x) x
@@ -232,24 +234,23 @@ char n2[]    = "201534867";
 
     DEBUG4(print_candidates(cnb););
 
+    enum SolverStrategiesType {
+  // Single out the right value techniques
+    SINGLE_IN_COL,
+    SINGLE_IN_ROW,
+    SINGLE_IN_SQR,
+    // Reduction strategies
+    NAKED_PAIR_IN_COL,
+    NAKED_PAIR_IN_ROW,
+    NAKED_PAIR_IN_SQR,
+    NAKED_TRIPLE_IN_COL,
+    NAKED_TRIPLE_IN_ROW,
+    NAKED_TRIPLE_IN_SQR
+    };
+
     fnd = 1;
-    type = 0;
-
-// Single out the right value techniques
-#define SINGLE_IN_COL  0
-#define SINGLE_IN_ROW  1
-#define SINGLE_IN_SQR  2
-
-// Reduction strategies
-#define NAKED_PAIR_IN_COL  4
-#define NAKED_PAIR_IN_ROW  5
-#define NAKED_PAIR_IN_SQR  6
-#define NAKED_TRIPLE_IN_COL  7
-#define NAKED_TRIPLE_IN_ROW  8
-#define NAKED_TRIPLE_IN_SQR  9
-#define REDUCED_SINGLE 3
-
-    while (fnd > 0 || type < NAKED_TRIPLE_IN_ROW)
+    type = SINGLE_IN_COL;
+    while (fnd > 0 || type < NAKED_TRIPLE_IN_SQR)
     {
       DEBUG4(print_board(board););
       type = (fnd == 0) ? type + 1 : 0;
@@ -260,7 +261,6 @@ char n2[]    = "201534867";
       DEBUG3(printf("sqr: "); for (i = 0; i < 9; i++) printf("%03x ", sqr[i]); printf("\n"););
       DEBUG3(printf("cnb: "); for (i = 0; i < 81; i++) printf("%s%03x", (i % 9) == 0 ? "\n     " : " ", cnb[i]); printf("\n"););
       DEBUG3(print_candidates(cnb););
-      DEBUG3(printf("Searching..using %d\n", type););
 
       for (ci = 0; ci < 9; ci++)
       {
@@ -268,37 +268,33 @@ char n2[]    = "201534867";
 
 	for (ri = 0; ri < 9; ri++)
 	{
-	  if (countbits[cnb[ri * 9 + ci] & 0x3ff] == 1)
-	  {
-	    DEBUG3(printf("REDUCED_SINGLE: %d\n", countbits[cnb[ri * 9 + ci]]););
-	    type = REDUCED_SINGLE;
-	  }
-	  else if (type == REDUCED_SINGLE) type++;
+	  DEBUG4(printf("Searching at %d/%d using %d\n", ci, ri, type););
+
 	  if ((cnb[ri * 9 + ci] & 0x200) == 0)
 	  {
-	    if (type < REDUCED_SINGLE) /* find positions with single candidates and promote them to solved */
+	    if (type < NAKED_PAIR_IN_COL) /* find positions with single candidates and promote them to solved */
 	    {
-	      res = 0;
+	      res = 0x1ff;
 	      switch (type)
 		{
-		case SINGLE_IN_COL:
-		  for (k = 0; k < 9; k++) { res = res | ((k != ri) ? cnb[k * 9 + ci] : 0); } // Collect all cells in column but the current one (ci, ri)
+		case SINGLE_IN_COL: // single instance for col in pos
+		  for (k = 0; k < 9; k++) { res = res & ((k != ri) ? ~cnb[k * 9 + ci] : 0x1ff); } 
 		  break;
-		case SINGLE_IN_ROW:
-		  for (k = 0; k < 9; k++) { res = res | ((k != ci) ? cnb[ri * 9 + k] : 0);  }// Collect all cells in row but the current one (ci, ri)
+		case SINGLE_IN_ROW: // single instance for row in pos
+		  for (k = 0; k < 9; k++) { res = res & ((k != ci) ? ~cnb[ri * 9 + k] : 0x1ff);  }
 		  break;
-		case SINGLE_IN_SQR:
-		  for (k = 0; k < 9; k++) { res = res | (sqrtopos[sqrs[ri * 9 + ci]][k] != (ri * 9 + ci) ? cnb[sqrtopos[sqrs[ri * 9 + ci]][k]] : 0); } // Collect all cells in sqare but the current one (ci, ri)
+		case SINGLE_IN_SQR: // collect all cells in sqare but the current one (ci, ri)
+		  for (k = 0; k < 9; k++) { res = res & (sqrtopos[sqrs[ri * 9 + ci]][k] != (ri * 9 + ci) ? ~cnb[sqrtopos[sqrs[ri * 9 + ci]][k]] : 0x1ff); }
 		  break;
 		default:
 		  printf("Wrong strategy type %d\n", type);
-
 		  continue;
 		  break;
 		}
 
 	      /* Check if there is single digit that can only fit in the current position */
-	      switch((res & 0x1ff) ^ 0x1ff)
+	      res = (res & 0x1ff); // Mask
+	      switch(res)
 	      {
 	      case 0x001: num = '1'; break;
 	      case 0x002: num = '2'; break;
@@ -319,7 +315,7 @@ char n2[]    = "201534867";
 		update_board( ri * 9 + ci, board, cnb, num);
 		fnd++;
 	      }
-	    }
+	  }
 	    else /* Use reduction techniques to enable single candidates */
 	    {
 	      switch (type)
@@ -328,7 +324,6 @@ char n2[]    = "201534867";
 		/* Find to positions in the same column with the same single two candidates */
 		if (countbits[cnb[ri * 9 + ci]] == 2)
 		{
-		  // for (k = 0; k < 9; k++)
 		  for (k = ri; k < 9; k++)
 		  {
 		    if (k != ri && countbits[cnb[k * 9 + ci] & 0x1ff] == 2 && cnb[k * 9 + ci] == cnb[ri * 9 + ci])
@@ -354,7 +349,6 @@ char n2[]    = "201534867";
 		/* Find to positions in the same row with the same single two candidates */
 		if (countbits[cnb[ri * 9 + ci]] == 2)
 		{
-		  // for (k = 0; k < 9; k++)
 		  for (k = ci; k < 9; k++)
 		  {
 		    if (k != ci && countbits[cnb[ri * 9 + k] & 0x1ff] == 2 && cnb[ri * 9 + k] == cnb[ri * 9 + ci])
@@ -426,7 +420,7 @@ char n2[]    = "201534867";
 			  {
 			    if (k3 != ri && k3 != k1 && k3 != k2)
 			    {
-			      DEBUG4(printf("  Masking %d/%d\n2", ci, k3););
+			      DEBUG4(printf("  Masking %d/%d\n", ci, k3););
 			      fnd = fnd + (cnb[k3  *  9 + ci] & (~mask & 0x1ff)) ? 1 : 0;
 			      cnb[k3 * 9 + ci] &= mask;
 			    }
@@ -450,14 +444,14 @@ char n2[]    = "201534867";
 		      {
 			int mask = cnb[ri * 9 + ci] | cnb[ri * 9 + k1] | cnb[ri * 9 + k2];
 			if (countbits[mask] == 3)
-			{
+		        {
 			  mask = (~mask) & 0x3ff;
 			  DEBUG4(printf("Found Triple in row at %d/%d, %d/%d and %d/%d\n", ci, ri, k1, ri, k2, ri););
 			  for (int k3 = 0; k3 < 9; k3++)
-			  {
+		          {
 			    if (k3 != ci && k3 != k1 && k3 != k2)
 			    {
-			      DEBUG4(printf("  Masking %d/%d\n2", ri, k3););
+			      DEBUG4(printf("  Masking %d/%d\n", k3, ri););
 			      fnd = fnd + (cnb[ri  *  9 + k3] & (~mask & 0x1ff)) ? 1 : 0;
 			      cnb[ri * 9 + k3] &= mask;
 			    }
@@ -472,19 +466,19 @@ char n2[]    = "201534867";
 		/* Find to positions in the same square with the same single two candidates */
 		if (countbits[cnb[ri * 9 + ci]] <= 3)
 		{
-		  printf("Suspecting triple at %d/%d\n", ci, ri);
+		  DEBUG4(printf("Suspecting triple at %d/%d\n", ci, ri););
 		  for (int k1 = 0; k1 < 9; k1++)
 		  {
 		    for (int k2 = k1 + 1; k2 < 9; k2++)
 		    {
-		      printf("  Checking out pos %d and %d - ", 
-			     sqrtopos[sqrs[ri * 9 + ci]][k1],  sqrtopos[sqrs[ri * 9 + ci]][k2]);
+		      DEBUG4(printf("  Checking out pos %d and %d - ", 
+				    sqrtopos[sqrs[ri * 9 + ci]][k1],  sqrtopos[sqrs[ri * 9 + ci]][k2]););
 		      if (ri * 9 + ci != sqrtopos[sqrs[ri * 9 + ci]][k1] &&  
 			  ri * 9 + ci != sqrtopos[sqrs[ri * 9 + ci]][k2] &&
 			  countbits[cnb[sqrtopos[sqrs[ri * 9 + ci]][k1]] & 0x1ff] <= 3 &&
 			  countbits[cnb[sqrtopos[sqrs[ri * 9 + ci]][k2]] & 0x1ff] <= 3)
 		      {
-			printf("Looks good - ");
+			DEBUG4(printf("Looks good - "););
 			int mask = cnb[ri * 9 + ci] | cnb[sqrtopos[sqrs[ri * 9 + ci]][k1]] | cnb[sqrtopos[sqrs[ri * 9 + ci]][k2]];
 			if (countbits[mask] == 3)
 			{
@@ -494,35 +488,20 @@ char n2[]    = "201534867";
 					sqrtopos[sqrs[ri * 9 + ci]][k2] % 9, sqrtopos[sqrs[ri * 9 + ci]][k2] / 9););
 			  for (int k3 = 0; k3 < 9; k3++)
 			  {
-			    if (k3 != ri && k3 != k1 && k3 != k2)
+			    if (k3 != sqrp[ri * 9 + ci] && k3 != k1 && k3 != k2)
 			    {
-			      DEBUG4(printf("  Masking %d/%d\n2", sqrtopos[sqrs[ri * 9 + ci]][k3] % 9, sqrtopos[sqrs[ri * 9 + ci]][k3] / 9););
+			      DEBUG4(printf("  Masking %d/%d ", sqrtopos[sqrs[ri * 9 + ci]][k3] % 9, sqrtopos[sqrs[ri * 9 + ci]][k3] / 9););
 			      fnd = fnd + (cnb[sqrtopos[sqrs[ri * 9 + ci]][k3]] & (~mask & 0x1ff)) ? 1 : 0;
+			      DEBUG4(printf("FND:%d\n", fnd););
 			      cnb[sqrtopos[sqrs[ri * 9 + ci]][k3]] &= mask;
 			    }
 			  }
 			}
 		      }
-		      printf("\n");
+		      DEBUG4(printf("\n"););
 		    }
 		  }
 		}
-		break;
-	      case REDUCED_SINGLE:
-		{
-		  char num = '0';
-		  res = cnb[ri * 9 + ci] & 0x1ff;
-		  while (res)
-		  {
-		    num++;
-		    res = res >> 1;
-		  }
-		  DEBUG3(printf("Reduced single: %d/%d: %03x to a %c\n", ci, ri, cnb[ri * 9 + ci], num););
-		  reduce_candidates( ri * 9 + ci, col, cols, row, rows, sqr, sqrs, cnb, board, sqrtopos, num);
-		  update_board(ri * 9 + ci, board, cnb, num);
-		  fnd++;
-		}
-		type = 0;
 		break;
 	      default:
 		printf("Wrong strategy type %d\n", type);
