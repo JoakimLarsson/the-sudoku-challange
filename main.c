@@ -78,11 +78,13 @@ main(int argc, char **argv)
 
   struct utsname sys;
   char name[80];
+  char fnam[80];
 
   uname(&sys);
   snprintf(name, sizeof(name), "%s %s", sys.sysname, sys.machine);
+  snprintf(fnam, sizeof(fnam), "%s", argc >= 2 ? argv[2] : "boards.txt");
 
-  fp = fopen("boards.txt", "r");
+  fp = fopen(fnam, "r");
 
   while (fgets(board, 1024, fp) != NULL){
     for (i = 0; i < 81; i++) board[i] = isdigit(board[i]) ? board[i] : '-'; /* Convert from other delimiters to dash */
