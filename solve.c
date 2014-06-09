@@ -7,7 +7,7 @@
 #include <stdlib.h>
 
 #ifdef DEBUG
-#define DEBUG3(x)
+#define DEBUG3(x) x
 #define DEBUG4(x)
 #else
 
@@ -245,12 +245,24 @@ char n2[]    = "201534867";
     NAKED_PAIR_IN_SQR,
     NAKED_TRIPLE_IN_COL,
     NAKED_TRIPLE_IN_ROW,
-    NAKED_TRIPLE_IN_SQR
+    NAKED_TRIPLE_IN_SQR,
+    HIDDEN_PAIR_IN_COL,
+    HIDDEN_PAIR_IN_ROW,
+    HIDDEN_PAIR_IN_SQR
     };
+
+#ifdef DEBUG
+    const char *SST[12] = { 
+      "Single in Column",        "Single in Row",        "Single in Square",  
+      "Naked Pair in Column",    "Naked Pair in Row",    "Naked Pair in Square",  
+      "Naked Triple in Column",  "Naked Triple in Row",  "Naked Triple in Square",  
+      "Hidden Pair in Column",   "Hidden Pair in Row",   "Hidden Pair in Square"
+    };
+#endif
 
     fnd = 1;
     type = SINGLE_IN_COL;
-    while (fnd > 0 || type < NAKED_TRIPLE_IN_SQR)
+    while (fnd > 0 || type < HIDDEN_PAIR_IN_SQR)
     {
       DEBUG4(print_board(board););
       type = (fnd == 0) ? type + 1 : 0;
@@ -261,6 +273,7 @@ char n2[]    = "201534867";
       DEBUG3(printf("sqr: "); for (i = 0; i < 9; i++) printf("%03x ", sqr[i]); printf("\n"););
       DEBUG3(printf("cnb: "); for (i = 0; i < 81; i++) printf("%s%03x", (i % 9) == 0 ? "\n     " : " ", cnb[i]); printf("\n"););
       DEBUG3(print_candidates(cnb););
+      DEBUG3(printf("Searching using %s\n", SST[type]););
 
       for (ci = 0; ci < 9; ci++)
       {
@@ -268,7 +281,7 @@ char n2[]    = "201534867";
 
 	for (ri = 0; ri < 9; ri++)
 	{
-	  DEBUG4(printf("Searching at %d/%d using %d\n", ci, ri, type););
+	  DEBUG4(printf("Searching at %d/%d using %s\n", ci, ri, SST[type]););
 
 	  if ((cnb[ri * 9 + ci] & 0x200) == 0)
 	  {
@@ -315,11 +328,99 @@ char n2[]    = "201534867";
 		update_board( ri * 9 + ci, board, cnb, num);
 		fnd++;
 	      }
-	  }
+	    }
 	    else /* Use reduction techniques to enable single candidates */
 	    {
 	      switch (type)
 	      {
+	      case HIDDEN_PAIR_IN_COL:
+		res = 0x1ff;
+		for (int k1 = 0; k1 < 9; k1++)
+		{
+		  if (k1 != ri)
+		  {
+		    int numbit;
+
+		    numbit = cnb[ri * 9 + ci] & cnb[k1 * 9 + ci]; // set candidates present in both pos of pair
+		    for (int k2 = 0; k2 < 9; k2++)
+		    {
+		      if (k2 != k1 && k2 != ri)
+		      {
+			numbit &= ~cnb[k2  *  9 + ci]; // clear candidates that can exist in other pos
+		      }
+		    }
+		    if (countbits[numbit] == 2)
+		    {
+		      DEBUG3(printf("  Found a hidden pair at %d/%d and %d/%d with %03x\n", ci, ri, ci, k1, numbit););
+		      fnd = (cnb[ri * 9 + ci] & numbit) != cnb[ri * 9 + ci] || (cnb[k1 * 9 + ci] & numbit) != cnb[k1 * 9 + ci] ? 1 : 0;
+		      cnb[ri * 9 + ci] &= numbit;
+		      cnb[k1 * 9 + ci] &= numbit;
+		    }
+		  }
+		}  
+		break;
+	      case HIDDEN_PAIR_IN_ROW:
+		res = 0x1ff;
+		for (int k1 = 0; k1 < 9; k1++)
+		{
+		  if (k1 != ri)
+		  {
+		    int numbit;
+
+		    numbit = cnb[ri * 9 + ci] & cnb[ri * 9 + k1]; // set candidates present in both pos of pair
+		    for (int k2 = 0; k2 < 9; k2++)
+		    {
+		      if (k2 != k1 && k2 != ri)
+		      {
+			numbit &= ~cnb[ri  *  9 + k2]; // clear candidates that can exist in other pos
+		      }
+		    }
+		    if (countbits[numbit] == 2)
+		    {
+		      fnd = (cnb[ri * 9 + ci] & numbit) != cnb[ri * 9 + ci] || (cnb[ri * 9 + k1] & numbit) != cnb[ri * 9 + k1] ? 1 : 0;
+		      cnb[ri * 9 + ci] &= numbit;
+		      cnb[ri * 9 + k1] &= numbit;
+		      DEBUG3(printf("  Found a hidden pair in row at %d/%d and %d/%d with %03x\n", ci, ri, ci, k1, numbit););
+		    }
+		  }
+		}  
+		break;
+	      case HIDDEN_PAIR_IN_SQR:
+		res = 0x1ff;
+		for (int k1 = 0; k1 < 9; k1++)
+		{
+		  if (k1 != sqrp[ri * 9 + ci])
+		  {
+		    int numbit;
+
+		    numbit = cnb[ri * 9 + ci] & cnb[sqrtopos[sqrs[ri * 9 + ci]][k1]]; // set candidates present in both pos of pair
+		    for (int k2 = 0; k2 < 9; k2++)
+		    {
+		      if (k2 != k1 && k2 != sqrp[ri * 9 + ci])
+		      {
+			numbit &= ~cnb[sqrtopos[sqrs[ri * 9 + ci]][k2]]; // clear candidates that can exist in other pos
+		      }
+		    }
+		    if (countbits[numbit] == 2)
+		    {
+		      int tmp1, tmp2;
+		      tmp1 = cnb[ri * 9 + ci];
+		      cnb[ri * 9 + ci] &= numbit;
+		      tmp2 = cnb[sqrtopos[sqrs[ri * 9 + ci]][k1]];
+		      cnb[sqrtopos[sqrs[ri * 9 + ci]][k1]] &= numbit;
+		      if (tmp1 != cnb[ri * 9 + ci] || tmp2 != cnb[sqrtopos[sqrs[ri * 9 + ci]][k1]])
+		      {
+			DEBUG3(printf("Found a hidden pair in sqr and changed %d - %d from %03x - %03x to %03x - %03x\n", 
+			       ri * 9 + ci, sqrtopos[sqrs[ri * 9 + ci]][k1], tmp1, tmp2, cnb[ri * 9 + ci],  
+				      cnb[sqrtopos[sqrs[ri * 9 + ci]][k1]]););
+			fnd++;
+			DEBUG3(print_candidates(cnb););
+		      }
+		    }
+		  }
+		}
+		
+		break;
 	      case NAKED_PAIR_IN_COL:
 		/* Find to positions in the same column with the same single two candidates */
 		if (countbits[cnb[ri * 9 + ci]] == 2)
