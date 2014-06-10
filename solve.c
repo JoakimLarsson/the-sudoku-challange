@@ -28,9 +28,9 @@
 
     //char board[] = "123456789123456789123456789123456789123456789123456789123456789123456789123456789";
     //char board[] = "---------------------------------------------------------------------------------";
-//    char board[] = "8--6----2-4--5--1----7----3-9---4--62-------87---1--5-3----9----1--8--9-4----2--5"; // Left 56 (insane) 
+    char board[] = "8--6----2-4--5--1----7----3-9---4--62-------87---1--5-3----9----1--8--9-4----2--5"; // Left 56 (insane) 
 //    char board[] = "2-3-8----8--7-----------1---6-5-7---4------3----1------------82-5----6---1-------";
-char board[] = "4-----8-5-3----------7------2-----6-----8-4------1-------6-3-7-5--2-----1-4------";
+//char board[]="82917658456432879131754938213346-83363628145-4-66532123418322-6756934128338712-45";
     //char board[] = "5-64----2-7--9--5-8---5-7--7----3----89-6-37----5----1--3-4---6-5--2--4-9----51-7"; // A test board fro solve.c
 //char board[] = "-6---39--5--1-----8-------7-4-2--6--7-------8--3--9-1-2-------5-----4--3--87---2-"; // Left 43 (hard)
 
@@ -80,8 +80,9 @@ static inline void update_board(int pos, char *board, int *cnb, unsigned int num
   numbit = (1 << (board[pos] - (int) '0') - 1);
   cnb[pos] = 0x200 | numbit;  // Mark position as solved  
 
-  DEBUG3(printf("Cnb: "); for (int i = 0; i < 81; i++) printf("%s%03x", (i % 9) == 0 ? "\n     " : " ", cnb[i]); printf("\n"););
+  DEBUG4(printf("Cnb: "); for (int i = 0; i < 81; i++) printf("%s%03x", (i % 9) == 0 ? "\n     " : " ", cnb[i]); printf("\n"););
   DEBUG3(print_board(board););
+  DEBUG4(print_candidates(cnb););
 }
 
 static inline void reduce_candidates(
@@ -192,8 +193,6 @@ char n2[]    = "201534867";
       //printf("%03x:%d%s", i, countbits[i], ((i + 1) % 16) == 0 ? "\n" : " ");
     }
 
-    DEBUG3(print_board(board);)
-
     // Clear bittables
     memset(col, 0, sizeof(col));
     memset(row, 0, sizeof(row));
@@ -232,7 +231,8 @@ char n2[]    = "201534867";
       }
     }
 
-    DEBUG4(print_candidates(cnb););
+    DEBUG3(print_board(board);)
+    DEBUG3(print_candidates(cnb););
 
     enum SolverStrategiesType {
   // Single out the right value techniques
@@ -268,11 +268,11 @@ char n2[]    = "201534867";
       type = (fnd == 0) ? type + 1 : 0;
       fnd = 0;
 
-      DEBUG3(printf("col: "); for (i = 0; i < 9; i++) printf("%03x ", col[i]); printf("\n"););
-      DEBUG3(printf("row: "); for (i = 0; i < 9; i++) printf("%03x ", row[i]); printf("\n"););
-      DEBUG3(printf("sqr: "); for (i = 0; i < 9; i++) printf("%03x ", sqr[i]); printf("\n"););
-      DEBUG3(printf("cnb: "); for (i = 0; i < 81; i++) printf("%s%03x", (i % 9) == 0 ? "\n     " : " ", cnb[i]); printf("\n"););
-      DEBUG3(print_candidates(cnb););
+      DEBUG4(printf("col: "); for (i = 0; i < 9; i++) printf("%03x ", col[i]); printf("\n"););
+      DEBUG4(printf("row: "); for (i = 0; i < 9; i++) printf("%03x ", row[i]); printf("\n"););
+      DEBUG4(printf("sqr: "); for (i = 0; i < 9; i++) printf("%03x ", sqr[i]); printf("\n"););
+      DEBUG4(printf("cnb: "); for (i = 0; i < 81; i++) printf("%s%03x", (i % 9) == 0 ? "\n     " : " ", cnb[i]); printf("\n"););
+      DEBUG4(print_candidates(cnb););
       DEBUG3(printf("Searching using %s\n", SST[type]););
 
       for (ci = 0; ci < 9; ci++)
@@ -351,8 +351,8 @@ char n2[]    = "201534867";
 		    }
 		    if (countbits[numbit] == 2)
 		    {
-		      DEBUG3(printf("  Found a hidden pair at %d/%d and %d/%d with %03x\n", ci, ri, ci, k1, numbit););
-		      fnd = (cnb[ri * 9 + ci] & numbit) != cnb[ri * 9 + ci] || (cnb[k1 * 9 + ci] & numbit) != cnb[k1 * 9 + ci] ? 1 : 0;
+		      DEBUG4(printf("  Found a hidden pair in col at %d/%d and %d/%d with %03x\n", ci, ri, ci, k1, numbit););
+		      fnd += (cnb[ri * 9 + ci] & numbit) != cnb[ri * 9 + ci] || (cnb[k1 * 9 + ci] & numbit) != cnb[k1 * 9 + ci] ? 1 : 0;
 		      cnb[ri * 9 + ci] &= numbit;
 		      cnb[k1 * 9 + ci] &= numbit;
 		    }
@@ -377,10 +377,10 @@ char n2[]    = "201534867";
 		    }
 		    if (countbits[numbit] == 2)
 		    {
-		      fnd = (cnb[ri * 9 + ci] & numbit) != cnb[ri * 9 + ci] || (cnb[ri * 9 + k1] & numbit) != cnb[ri * 9 + k1] ? 1 : 0;
+		      fnd += (cnb[ri * 9 + ci] & numbit) != cnb[ri * 9 + ci] || (cnb[ri * 9 + k1] & numbit) != cnb[ri * 9 + k1] ? 1 : 0;
 		      cnb[ri * 9 + ci] &= numbit;
 		      cnb[ri * 9 + k1] &= numbit;
-		      DEBUG3(printf("  Found a hidden pair in row at %d/%d and %d/%d with %03x\n", ci, ri, ci, k1, numbit););
+		      DEBUG4(printf("  Found a hidden pair in row at %d/%d and %d/%d with %03x\n", ci, ri, ci, k1, numbit););
 		    }
 		  }
 		}  
@@ -410,11 +410,11 @@ char n2[]    = "201534867";
 		      cnb[sqrtopos[sqrs[ri * 9 + ci]][k1]] &= numbit;
 		      if (tmp1 != cnb[ri * 9 + ci] || tmp2 != cnb[sqrtopos[sqrs[ri * 9 + ci]][k1]])
 		      {
-			DEBUG3(printf("Found a hidden pair in sqr and changed %d - %d from %03x - %03x to %03x - %03x\n", 
+			DEBUG4(printf("Found a hidden pair in sqr and changed %d - %d from %03x - %03x to %03x - %03x\n", 
 			       ri * 9 + ci, sqrtopos[sqrs[ri * 9 + ci]][k1], tmp1, tmp2, cnb[ri * 9 + ci],  
 				      cnb[sqrtopos[sqrs[ri * 9 + ci]][k1]]););
 			fnd++;
-			DEBUG3(print_candidates(cnb););
+			DEBUG4(print_candidates(cnb););
 		      }
 		    }
 		  }
@@ -431,14 +431,14 @@ char n2[]    = "201534867";
 		    {
 		      int numbit;
 
-		      DEBUG3(printf("Found %03x in both (%d/%d) and (%d/%d)\n", cnb[ri * 9 + ci], ri, ci, k, ci););
+		      DEBUG4(printf("Found naked pair in col %03x in both (%d/%d) and (%d/%d)\n", cnb[ri * 9 + ci], ri, ci, k, ci););
 		      /* Update scratchpad */
 		      numbit = ~cnb[ri * 9 + ci] & 0x3ff; // Make mask of bit position and preserve solved bit (0x200)
 		      for (int r = 0; r < 9; r++)
 		      {
 			if (r != k && r != ri)
 			{
-			  fnd = fnd + (cnb[r  *  9 + ci] & (~numbit & 0x1ff)) ? 1 : 0;
+			  fnd += (cnb[r  *  9 + ci] & (~numbit & 0x1ff)) ? 1 : 0;
 			  cnb[r  *  9 + ci] &= numbit; // clear candidates in same column as pos
 			}
 		      }
@@ -456,14 +456,14 @@ char n2[]    = "201534867";
 		    {
 		      int numbit;
 
-		      DEBUG3(printf("Found %03x in both (%d/%d) and (%d/%d)\n", cnb[ri * 9 + ci], ri, ci, ri, k););
+		      DEBUG4(printf("Found naked pair in row %03x in both (%d/%d) and (%d/%d)\n", cnb[ri * 9 + ci], ri, ci, ri, k););
 		      /* Update scratchpad */
 		      numbit = ~cnb[ri * 9 + ci] & 0x3ff; // Make mask of bit position and preserve solved bit (0x200)
 		      for (int c = 0; c < 9; c++)
 		      {
 			if (c != k && c != ci)
 			{
-			  fnd = fnd + (cnb[ri  *  9 + c] & (~numbit & 0x1ff)) ? 1 : 0;
+			  fnd += (cnb[ri  *  9 + c] & (~numbit & 0x1ff)) ? 1 : 0;
 			  cnb[ri  *  9 + c] &= numbit; // clear candidates in same row as pos
 			}
 		      }
@@ -483,7 +483,7 @@ char n2[]    = "201534867";
 		    {
 		      int numbit;
 
-		      DEBUG3(printf("Found %03x in both (%d/%d) and (%d/%d), masking out candidates\n", 
+		      DEBUG4(printf("Found naked pair in sqr %03x in both (%d/%d) and (%d/%d), masking out candidates\n", 
 				    cnb[ri * 9 + ci], ri, ci, 
 				    rows[sqrtopos[sqrs[ri * 9 + ci]][k]], 
 				    cols[sqrtopos[sqrs[ri * 9 + ci]][k]]););
@@ -493,7 +493,7 @@ char n2[]    = "201534867";
 		      {
 			if (ri * 9 + ci != sqrtopos[sqrs[ri * 9 + ci]][s] && s != k)
 			{
-			  fnd = fnd + (cnb[sqrtopos[sqrs[ri * 9 + ci]][s]] & (~numbit & 0x1ff)) ? 1 : 0;
+			  fnd += (cnb[sqrtopos[sqrs[ri * 9 + ci]][s]] & (~numbit & 0x1ff)) ? 1 : 0;
 			  cnb[sqrtopos[sqrs[ri * 9 + ci]][s]] &= numbit; // clear candidates in same row as pos
 			}
 		      }
@@ -516,13 +516,13 @@ char n2[]    = "201534867";
 			if (countbits[mask] == 3)
 			{
 			  mask = (~mask) & 0x3ff;
-			  DEBUG4(printf("Found Triple at %d/%d, %d/%d and %d/%d\n", ci, ri, ci, k1, ci, k2););
+			  DEBUG4(printf("Found a Naked Triple in col at %d/%d, %d/%d and %d/%d\n", ci, ri, ci, k1, ci, k2););
 			  for (int k3 = 0; k3 < 9; k3++)
 			  {
 			    if (k3 != ri && k3 != k1 && k3 != k2)
 			    {
-			      DEBUG4(printf("  Masking %d/%d\n", ci, k3););
-			      fnd = fnd + (cnb[k3  *  9 + ci] & (~mask & 0x1ff)) ? 1 : 0;
+			      DEBUG4(printf("  Masking %d/%d with mask: %03x\n", ci, k3, mask););
+			      fnd += (cnb[k3  *  9 + ci] & (~mask & 0x1ff)) ? 1 : 0;
 			      cnb[k3 * 9 + ci] &= mask;
 			    }
 			  }
@@ -553,7 +553,7 @@ char n2[]    = "201534867";
 			    if (k3 != ci && k3 != k1 && k3 != k2)
 			    {
 			      DEBUG4(printf("  Masking %d/%d\n", k3, ri););
-			      fnd = fnd + (cnb[ri  *  9 + k3] & (~mask & 0x1ff)) ? 1 : 0;
+			      fnd += (cnb[ri  *  9 + k3] & (~mask & 0x1ff)) ? 1 : 0;
 			      cnb[ri * 9 + k3] &= mask;
 			    }
 			  }
@@ -584,15 +584,15 @@ char n2[]    = "201534867";
 			if (countbits[mask] == 3)
 			{
 			  mask = (~mask) & 0x3ff;
-			  DEBUG4(printf("Found Triple in sqr at %d/%d, %d/%d and %d/%d\n", ci, ri, 
-					sqrtopos[sqrs[ri * 9 + ci]][k1] % 9, sqrtopos[sqrs[ri * 9 + ci]][k1] / 9, 
-					sqrtopos[sqrs[ri * 9 + ci]][k2] % 9, sqrtopos[sqrs[ri * 9 + ci]][k2] / 9););
 			  for (int k3 = 0; k3 < 9; k3++)
 			  {
 			    if (k3 != sqrp[ri * 9 + ci] && k3 != k1 && k3 != k2)
 			    {
+			  DEBUG4(printf("Found Triple in sqr at %d/%d, %d/%d and %d/%d\n", ci, ri, 
+					sqrtopos[sqrs[ri * 9 + ci]][k1] % 9, sqrtopos[sqrs[ri * 9 + ci]][k1] / 9, 
+					sqrtopos[sqrs[ri * 9 + ci]][k2] % 9, sqrtopos[sqrs[ri * 9 + ci]][k2] / 9););
 			      DEBUG4(printf("  Masking %d/%d ", sqrtopos[sqrs[ri * 9 + ci]][k3] % 9, sqrtopos[sqrs[ri * 9 + ci]][k3] / 9););
-			      fnd = fnd + (cnb[sqrtopos[sqrs[ri * 9 + ci]][k3]] & (~mask & 0x1ff)) ? 1 : 0;
+			      fnd += (cnb[sqrtopos[sqrs[ri * 9 + ci]][k3]] & (~mask & 0x1ff)) ? 1 : 0;
 			      DEBUG4(printf("FND:%d\n", fnd););
 			      cnb[sqrtopos[sqrs[ri * 9 + ci]][k3]] &= mask;
 			    }
@@ -615,6 +615,7 @@ char n2[]    = "201534867";
       }
     }
     DEBUG3(print_board(board););  
+    DEBUG3(print_candidates(cnb););  
 }
 
 #if DEBUG | DEBUG1
