@@ -33,7 +33,7 @@ void print_board(char *board)
 {
     int a, b;
     
-    printf("\n");
+    printf("\n Brd ");
     for (a = 0; a < 9; a++)
     {
         for (b = 0; b < 9; b++)
@@ -66,6 +66,7 @@ main(int argc, char **argv)
 {
   uint64_t tt1, tt2;
   char board[1024];
+  char board2[1024];
   FILE *fp;
   int i, left, left2; 
   int bid;
@@ -83,15 +84,28 @@ main(int argc, char **argv)
   uname(&sys);
   snprintf(name, sizeof(name), "%s %s", sys.sysname, sys.machine);
   snprintf(fnam, sizeof(fnam), "%s", argc >= 2 ? argv[2] : "boards.txt");
+  board[0] = '\0';
+  board2[0] = '\0';
+  left2 = -1;
 
   fp = fopen(fnam, "r");
 
   while (fgets(board, 1024, fp) != NULL){
-    for (i = 0; i < 81; i++) board[i] = isdigit(board[i]) ? board[i] : '-'; /* Convert from other delimiters to dash */
+
+    if (memchr(board, '.', 81) == NULL && memchr(board, '-', 81) == NULL )
+    {
+      if (left2 == 0)
+	printf(" Cmp %s and %s and got a %s\n", board, board2, (i = memcmp(board, board2, 81)) == 0 ? "match!!" : "fail!!");
+      if (i == 0)
+	continue;
+      else
+	exit(-1);
+    }
+
 #ifdef BENCH
       
     board[81 + COMMENT_LENGTH + 1] = '\0';
-    printf("%s ", board);
+    printf(" Run %s ", board);
     board[81] = '\0';
     cmnt = &board[82];
 #else
@@ -100,6 +114,7 @@ main(int argc, char **argv)
     printf("=================");
     print_board(board);
 #endif
+    for (i = 0; i < 81; i++) board[i] = isdigit(board[i]) ? board[i] : '-'; /* Convert from other delimiters to dash */
     
     if ((tmp = strstr(cmnt, "Time")) != NULL){
       *tmp = '\0';
@@ -142,7 +157,7 @@ main(int argc, char **argv)
     left2 = count_left(board);
 
     board[81] = 0;
-    printf("%s ", board);
+    printf("Res %s ", board);
     
     diff = tt2 - tt1;
     
@@ -152,6 +167,7 @@ main(int argc, char **argv)
 
     store_result(bid, name, (*get_name)(), diff, left2, board);
 
+    strncpy(board2, board, sizeof(board)); // Copy in case next row is the correct solution
   }
   
   fclose(fp);

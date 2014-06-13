@@ -15,6 +15,10 @@
 
  ---3--67-5--4--8--628---3-----2-4-37---------41-7-5-----2---961--6--1--4-84--9--- Medel
 
+ main.c will convert from other formats like dot notation:
+
+ ...3..67.5..4..8..628...3.....2.4.37.........41.7.5.....2...961..6..1..4.84..9... Medel
+
  The trailing characters may have some optional comments about the board
 
    Open source sudoku solvers
@@ -44,7 +48,7 @@
 
  Then create data sets from the database:
 
- sqlite3 tss.db 'select SOLVER from LAPS GROUP BY SOLVER;'
+ sqlite3 tss.db 'SELECT solver FROM laps GROUP BY solver;'
 
  You will get a list of the tested solvers, for instance
 
@@ -56,9 +60,9 @@
 
  Choose the solvers you want to compare and generate data files
 
-sqlite3 tss.db 'select avg(TIME),BOARD from LAPS WHERE SOLVER LIKE "Reference" GROUP BY BOARD;' > ref.dat
-sqlite3 tss.db 'select avg(TIME),BOARD from LAPS WHERE SOLVER LIKE "Sudoku Solver 0.3" GROUP BY BOARD;' > solv.dat
-sqlite3 tss.db 'select avg(TIME),BOARD from LAPS WHERE SOLVER LIKE "Yass 1.0" GROUP BY BOARD;' > yass.dat
+sqlite3 tss.db 'SELECT AVG(time),board FROM laps WHERE solver LIKE "Reference" GROUP BY BOARD;' > ref.dat
+sqlite3 tss.db 'SELECT AVG(time),board FROM laps WHERE solver LIKE "Sudoku Solver 0.3" GROUP BY BOARD;' > solv.dat
+sqlite3 tss.db 'SELECT AVG(time),board FROM laps WHERE solver LIKE "Yass 1.0" GROUP BY BOARD;' > yass.dat
 
  Start gnuplot and import the data sets:
 
@@ -72,6 +76,11 @@ sqlite3 tss.db 'select avg(TIME),BOARD from LAPS WHERE SOLVER LIKE "Yass 1.0" GR
  The result is now available in report.pdf, use a pdf viewer to check the results!
 
  If you enter more Sudoku boards to the boards.txt file, please consider submitting these for others to use.
+
+When developing a solver you can sort out the boards that you fully solve, for comparison, as follows
+
+ sqlite3 tss.db 'SELECT boards.board,boards.comment FROM laps,boards WHERE solver = "Ref 1.2" AND rest = 0 AND laps.board = boards.id GROUP BY laps.board ORDER BY avg(time);' > zero.txt
+
 
   HAVE FUN!
 
