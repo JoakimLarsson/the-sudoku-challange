@@ -28,7 +28,8 @@
 
     //char board[] = "123456789123456789123456789123456789123456789123456789123456789123456789123456789";
     //char board[] = "---------------------------------------------------------------------------------";
-    char board[] = "8--6----2-4--5--1----7----3-9---4--62-------87---1--5-3----9----1--8--9-4----2--5"; // Left 56 (insane) 
+      char board[] = "7--1523--------92----3-----1----47-8-------6------------9---5-6-4-9-7---8----6-1-";
+//    char board[] = "8--6----2-4--5--1----7----3-9---4--62-------87---1--5-3----9----1--8--9-4----2--5"; // Left 56 (insane) 
 //    char board[] = "2-3-8----8--7-----------1---6-5-7---4------3----1------------82-5----6---1-------";
 //char board[]="82917658456432879131754938213346-83363628145-4-66532123418322-6756934128338712-45";
     //char board[] = "5-64----2-7--9--5-8---5-7--7----3----89-6-37----5----1--3-4---6-5--2--4-9----51-7"; // A test board fro solve.c
@@ -274,7 +275,7 @@ char n2[]    = "201534867";
       DEBUG4(printf("row: "); for (i = 0; i < 9; i++) printf("%03x ", row[i]); printf("\n"););
       DEBUG4(printf("sqr: "); for (i = 0; i < 9; i++) printf("%03x ", sqr[i]); printf("\n"););
       DEBUG4(printf("cnb: "); for (i = 0; i < 81; i++) printf("%s%03x", (i % 9) == 0 ? "\n     " : " ", cnb[i]); printf("\n"););
-      DEBUG4(print_candidates(cnb););
+      DEBUG3(print_candidates(cnb););
       DEBUG3(printf("Searching using %s\n", SST[type]););
 
       for (ci = 0; ci < 9; ci++)
@@ -520,12 +521,12 @@ char n2[]    = "201534867";
 			if (countbits[mask] == 3)
 			{
 			  mask = (~mask) & 0x3ff;
-			  DEBUG4(printf("Found a Naked Triple in col at %d/%d, %d/%d and %d/%d\n", ci, ri, ci, k1, ci, k2););
+			  DEBUG3(printf("Found a Naked Triple in col at %d/%d, %d/%d and %d/%d\n", ci, ri, ci, k1, ci, k2););
 			  for (int k3 = 0; k3 < 9; k3++)
 			  {
 			    if (k3 != ri && k3 != k1 && k3 != k2)
 			    {
-			      DEBUG4(printf("  Masking %d/%d with mask: %03x\n", ci, k3, mask););
+			      DEBUG3(printf("  Masking %d/%d with mask: %03x\n", ci, k3, mask););
 			      fnd += (cnb[k3  *  9 + ci] & (~mask & 0x1ff)) ? 1 : 0;
 			      cnb[k3 * 9 + ci] &= mask;
 			    }
