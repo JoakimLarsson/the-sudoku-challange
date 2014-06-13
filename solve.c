@@ -248,21 +248,23 @@ char n2[]    = "201534867";
     NAKED_TRIPLE_IN_SQR,
     HIDDEN_PAIR_IN_COL,
     HIDDEN_PAIR_IN_ROW,
-    HIDDEN_PAIR_IN_SQR
+    HIDDEN_PAIR_IN_SQR,
+    POINTINGS_IN_SQR
     };
 
 #ifdef DEBUG
-    const char *SST[12] = { 
+    const char *SST[] = { 
       "Single in Column",        "Single in Row",        "Single in Square",  
       "Naked Pair in Column",    "Naked Pair in Row",    "Naked Pair in Square",  
       "Naked Triple in Column",  "Naked Triple in Row",  "Naked Triple in Square",  
-      "Hidden Pair in Column",   "Hidden Pair in Row",   "Hidden Pair in Square"
+      "Hidden Pair in Column",   "Hidden Pair in Row",   "Hidden Pair in Square",
+      "Pointings in Square"
     };
 #endif
 
     fnd = 1;
     type = SINGLE_IN_COL;
-    while (fnd > 0 || type < HIDDEN_PAIR_IN_SQR)
+    while (fnd > 0 || type < POINTINGS_IN_SQR)
     {
       DEBUG4(print_board(board););
       type = (fnd == 0) ? type + 1 : 0;
@@ -333,6 +335,8 @@ char n2[]    = "201534867";
 	    {
 	      switch (type)
 	      {
+	      case POINTINGS_IN_SQR:
+		break;
 	      case HIDDEN_PAIR_IN_COL:
 		res = 0x1ff;
 		for (int k1 = 0; k1 < 9; k1++)
