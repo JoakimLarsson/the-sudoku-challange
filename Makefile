@@ -5,7 +5,7 @@ CC=g++
 CFLAGS=-c -DSQLITE -DBENCH -I $(BUILD_DIR)
 LDFLAGS= -lsqlite3
 
-.PHONY: clean ref solver yass cmankey
+.PHONY: clean ref solver yass cmankey reference
 
 all: pef reference solver yass cmankey
 
