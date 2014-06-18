@@ -8,7 +8,7 @@
 
 #ifdef DEBUG
 #define DEBUG3(x) x
-#define DEBUG4(x)
+#define DEBUG4(x) 
 #else
 
 /* Debug statements as plugin */
@@ -51,7 +51,7 @@ static void print_board(char *board)
     }
 }
 
-static inline void print_candidates(int *candidates)
+static inline void print_candidates(unsigned int *candidates)
 {
   printf("Candidates: "); for (int i = 0; i < 81; i++) printf("%s%03x", (i % 9) == 0 ? "\n     " : " ", candidates[i]); printf("\n");
   //  printf("Candidates:\n");
@@ -72,7 +72,7 @@ static inline void print_candidates(int *candidates)
 }
 #endif
 
-static inline void update_board(int pos, char *board, int *cnb, unsigned int num)
+static inline void update_board(int pos, char *board, unsigned int *cnb, unsigned int num)
 {
   int numbit;
 
@@ -81,7 +81,7 @@ static inline void update_board(int pos, char *board, int *cnb, unsigned int num
   numbit = (1 << (board[pos] - (int) '0') - 1);
   cnb[pos] = 0x200 | numbit;  // Mark position as solved  
 
-  DEBUG4(printf("Cnb: "); for (int i = 0; i < 81; i++) printf("%s%03x", (i % 9) == 0 ? "\n     " : " ", cnb[i]); printf("\n"););
+  DEBUG3(printf("Cnb: "); for (int i = 0; i < 81; i++) printf("%s%03x", (i % 9) == 0 ? "\n     " : " ", cnb[i]); printf("\n"););
   DEBUG3(print_board(board););
   DEBUG4(print_candidates(cnb););
 }
@@ -94,7 +94,7 @@ static inline void reduce_candidates(
 				     char *rows,
 				     unsigned int *sqr, 
 				     char *sqrs,
-				     int *cnb, 
+				     unsigned int *cnb, 
 				     char *board, 
 				     int sqrtopos[][9],
 				     unsigned int num)
@@ -167,8 +167,8 @@ char n2[]    = "201534867";
     unsigned int sqr[9]; // What number in sqr
     //    unsigned int occ[9]; // What cells are occupied in sqr 
 
-    int cnb[81]; // scratchpad
-    unsigned int countbits[512]; // Lookup table for how many set bits there are in a value
+    unsigned int cnb[81]; // scratchpad
+    unsigned int countbits[0x3ff]; // Lookup table for how many set bits there are in a value
 
     //    int cocc[9]; // Each number temp storage for in square status
 
@@ -275,7 +275,7 @@ char n2[]    = "201534867";
       DEBUG4(printf("row: "); for (i = 0; i < 9; i++) printf("%03x ", row[i]); printf("\n"););
       DEBUG4(printf("sqr: "); for (i = 0; i < 9; i++) printf("%03x ", sqr[i]); printf("\n"););
       DEBUG4(printf("cnb: "); for (i = 0; i < 81; i++) printf("%s%03x", (i % 9) == 0 ? "\n     " : " ", cnb[i]); printf("\n"););
-      DEBUG3(print_candidates(cnb););
+      DEBUG4(print_candidates(cnb););
       DEBUG3(printf("Searching using %s\n", SST[type]););
 
       for (ci = 0; ci < 9; ci++)
@@ -522,11 +522,12 @@ char n2[]    = "201534867";
 			{
 			  mask = (~mask) & 0x3ff;
 			  DEBUG3(printf("Found a Naked Triple in col at %d/%d, %d/%d and %d/%d\n", ci, ri, ci, k1, ci, k2););
+			  DEBUG4(print_candidates(cnb););
 			  for (int k3 = 0; k3 < 9; k3++)
 			  {
 			    if (k3 != ri && k3 != k1 && k3 != k2)
 			    {
-			      DEBUG3(printf("  Masking %d/%d with mask: %03x\n", ci, k3, mask););
+			      DEBUG4(printf("  Masking %d/%d with mask: %03x\n", ci, k3, mask););
 			      fnd += (cnb[k3  *  9 + ci] & (~mask & 0x1ff)) ? 1 : 0;
 			      cnb[k3 * 9 + ci] &= mask;
 			    }
