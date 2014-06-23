@@ -28,8 +28,8 @@
 
     //char board[] = "123456789123456789123456789123456789123456789123456789123456789123456789123456789";
     //char board[] = "---------------------------------------------------------------------------------";
-      char board[] = "7--1523--------92----3-----1----47-8-------6------------9---5-6-4-9-7---8----6-1-";
 //    char board[] = "8--6----2-4--5--1----7----3-9---4--62-------87---1--5-3----9----1--8--9-4----2--5"; // Left 56 (insane) 
+char board[] = "1---34-8----8--5----4-6--21-18------3--1-2--6------81-52--7-9----6--9----9-64---2";
 //    char board[] = "2-3-8----8--7-----------1---6-5-7---4------3----1------------82-5----6---1-------";
 //char board[]="82917658456432879131754938213346-83363628145-4-66532123418322-6756934128338712-45";
     //char board[] = "5-64----2-7--9--5-8---5-7--7----3----89-6-37----5----1--3-4---6-5--2--4-9----51-7"; // A test board fro solve.c
@@ -51,11 +51,22 @@ static void print_board(char *board)
     }
 }
 
+static inline unsigned int bits2nbr(unsigned int bits)
+{
+  unsigned int res;
+  unsigned int fact = 0;
+  for (int i = 0; i < 10; i++)
+  {
+    res += ((bits & (1 << i)) != 0) ? (i + 1) * (10 ^ fact++) : 0;
+  }
+  return res;
+}
+
 static inline void print_candidates(unsigned int *candidates)
 {
   printf("Candidates: "); for (int i = 0; i < 81; i++) printf("%s%03x", (i % 9) == 0 ? "\n     " : " ", candidates[i]); printf("\n");
   //  printf("Candidates:\n");
-  printf("------+-----+-----+-----+-----+-----+-----+-----+-----+\n");
+  printf("o-----o-----o-----o-----o-----o-----o-----o-----o-----o\n");
   for (int l = 0; l < 9; l++){
     for (int i = 0; i < 3; i++){
       printf("| ");
@@ -67,10 +78,56 @@ static inline void print_candidates(unsigned int *candidates)
       }
       printf("\n");
     }
-    printf("+-----+-----+-----+-----+-----+-----+-----+-----+-----+\n");
+    char ch = (l + 1) % 3 ? '+' : 'o';
+    printf("o-----%c-----%c-----o-----%c-----%c-----o-----%c-----%c-----o\n", ch, ch, ch, ch, ch, ch);
   }
 }
 #endif
+
+static inline int maskrow(int pos, unsigned int mask, unsigned int *cnb, char *sqrs, char *rows)
+{
+  int res = 0;
+  int row = rows[pos];
+  mask &= 0x1ff;
+  for (int q = 0; q < 9; q++)
+  {
+    if (sqrs[row * 9 + q] != sqrs[pos])
+    {
+      if ((cnb[row * 9 + q] & mask) != 0)
+      {
+	DEBUG3(printf("Found a Pointing in Square, maskrow %03x in row %d and col %d", row * 9 + q & mask, row, q););
+	DEBUG3(print_board(board););
+	DEBUG3(print_candidates(cnb););
+	cnb[row * 9 + q] &= ~mask;
+	res += 1;
+      }
+    }
+  }
+  return res;
+}
+
+static inline int maskcol(int pos, unsigned int mask, unsigned int *cnb, char *sqrs, char *cols)
+{
+  int res = 0;
+  int col = cols[pos];
+  mask &= 0x1ff;
+
+  for (int q = 0; q < 9; q++)
+  {
+    if (sqrs[q * 9 + col] != sqrs[pos])
+    {
+      if ((cnb[q * 9 + col] & mask) != 0)
+      {
+	DEBUG3(printf("Found a Pointing in Square, maskcol %03x in row %d and col %d", q * 9 + col & mask, q, col););
+	DEBUG3(print_board(board););
+	DEBUG3(print_candidates(cnb););
+	cnb[q * 9 + col] &= ~mask;
+	res += 1;
+      }
+    }
+  }
+  return res;
+}
 
 static inline void update_board(int pos, char *board, unsigned int *cnb, unsigned int num)
 {
@@ -122,7 +179,7 @@ static inline void reduce_candidates(
   DEBUG3(printf("Sqr: "); for (int i = 0; i < 9; i++) printf("%03x ", sqr[i]); printf("\n"););
 }
 
-extern "C" char *solver_name(){ return (char *) "Ref 1.2"; }
+extern "C" char *solver_name(){ return (char *) "Ref 1.3"; }
 
 extern "C" void solve_board(char *board)
 {
@@ -152,10 +209,10 @@ char cols[]     = "0123456780123456780123456780123456780123456780123456780123456
 char rows[]     = "000000000111111111222222222333333333444444444555555555666666666777777777888888888";
 
 // Cell to first of two adjacent col/rows in a square
-char n1[]    = "120453786";
+//char n1[]    = "120453786";
 
 // Cell to second of two adjacent col/rows in a square
-char n2[]    = "201534867";
+//char n2[]    = "201534867";
 
 
     // Number of bits in nybble representing 0-8
@@ -337,6 +394,26 @@ char n2[]    = "201534867";
 	      switch (type)
 	      {
 	      case POINTINGS_IN_SQR:
+		{
+		  DEBUG4(printf("Checking Box: %d for number %d modulus 3: %d\n", ci, ri + 1, ci % 3););
+		  // Find all numbers possible in rows and cols
+		  int brow1 = cnb[sqrtopos[ci][0]] | cnb[sqrtopos[ci][1]] | cnb[sqrtopos[ci][2]];
+		  int brow2 = cnb[sqrtopos[ci][3]] | cnb[sqrtopos[ci][4]] | cnb[sqrtopos[ci][5]];
+		  int brow3 = cnb[sqrtopos[ci][6]] | cnb[sqrtopos[ci][7]] | cnb[sqrtopos[ci][8]];
+		  int bcol1 = cnb[sqrtopos[ci][0]] | cnb[sqrtopos[ci][3]] | cnb[sqrtopos[ci][6]];
+		  int bcol2 = cnb[sqrtopos[ci][1]] | cnb[sqrtopos[ci][4]] | cnb[sqrtopos[ci][7]];
+		  int bcol3 = cnb[sqrtopos[ci][2]] | cnb[sqrtopos[ci][5]] | cnb[sqrtopos[ci][8]];
+		  // Find unique numbers in each row and col
+		  if (brow1 & ~(brow2 | brow3)) fnd += maskrow(sqrtopos[ci][0], brow1 & ~(brow2 | brow3), cnb, sqrs, rows);
+		  if (brow2 & ~(brow1 | brow3)) fnd += maskrow(sqrtopos[ci][3], brow2 & ~(brow1 | brow3), cnb, sqrs, rows);
+		  if (brow3 & ~(brow2 | brow1)) fnd += maskrow(sqrtopos[ci][6], brow3 & ~(brow2 | brow1), cnb, sqrs, rows);
+
+		  if (bcol1 & ~(bcol2 | bcol3)) fnd += maskcol(sqrtopos[ci][0], bcol1 & ~(bcol2 | bcol3), cnb, sqrs, cols);
+		  if (bcol2 & ~(bcol1 | bcol3)) fnd += maskcol(sqrtopos[ci][1], bcol2 & ~(bcol1 | bcol3), cnb, sqrs, cols);
+		  if (bcol3 & ~(bcol2 | bcol1)) fnd += maskcol(sqrtopos[ci][2], bcol3 & ~(bcol2 | bcol1), cnb, sqrs, cols);
+		  ri = 9;
+		}
+		
 		break;
 	      case HIDDEN_PAIR_IN_COL:
 		res = 0x1ff;
