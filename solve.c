@@ -2,6 +2,7 @@
 // g++ -DDEBUG -o s solve.c; ./s
 //
 
+#include <ctype.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,7 +30,7 @@
     //char board[] = "123456789123456789123456789123456789123456789123456789123456789123456789123456789";
     //char board[] = "---------------------------------------------------------------------------------";
 //    char board[] = "8--6----2-4--5--1----7----3-9---4--62-------87---1--5-3----9----1--8--9-4----2--5"; // Left 56 (insane) 
-char board[] = "1---34-8----8--5----4-6--21-18------3--1-2--6------81-52--7-9----6--9----9-64---2";
+char board[] = "1...3468....8..54..84.6.321.18...2..3..1824.6......81.521378964..6..9..889.64...2";
 //    char board[] = "2-3-8----8--7-----------1---6-5-7---4------3----1------------82-5----6---1-------";
 //char board[]="82917658456432879131754938213346-83363628145-4-66532123418322-6756934128338712-45";
     //char board[] = "5-64----2-7--9--5-8---5-7--7----3----89-6-37----5----1--3-4---6-5--2--4-9----51-7"; // A test board fro solve.c
@@ -49,6 +50,21 @@ static void print_board(char *board)
         }    
         printf("\n");
     }
+}
+
+static void print_line(char *board)
+{
+    int a, b;
+
+    printf("\n\n");
+    for (a = 0; a < 9; a++)
+    {
+        for (b = 0; b < 9; b++)
+        {
+	  printf("%c",board[a * 9 + b] != '-' ? board[a * 9 + b] : '.');
+        }    
+    }
+    printf("\n");
 }
 
 static inline unsigned int bits2nbr(unsigned int bits)
@@ -698,6 +714,7 @@ char rows[]     = "0000000001111111112222222223333333334444444445555555556666666
       }
     }
     DEBUG3(print_board(board););  
+    DEBUG3(print_line(board););  
     DEBUG3(print_candidates(cnb););  
 }
 
@@ -705,9 +722,11 @@ char rows[]     = "0000000001111111112222222223333333334444444445555555556666666
 
 main()
 {
-    solve_board(board);
+  for (int i = 0; i < 81; i++) board[i] = isdigit(board[i]) ? board[i] : '-'; /* Convert from other delimiters to dash */
 
-    exit(0);
+  solve_board(board);
+
+  exit(0);
 }
 
 #endif
