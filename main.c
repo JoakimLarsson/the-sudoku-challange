@@ -94,6 +94,7 @@ main(int argc, char **argv)
 
     if (memchr(board, '.', 81) == NULL && memchr(board, '-', 81) == NULL )
     {
+      i = 0;
       if (left2 == 0)
 	printf(" Cmp %s and %s and got a %s\n", board, board2, (i = memcmp(board, board2, 81)) == 0 ? "match!!" : "fail!!");
       if (i == 0)
@@ -115,7 +116,7 @@ main(int argc, char **argv)
     print_board(board);
 #endif
     for (i = 0; i < 81; i++) board[i] = isdigit(board[i]) ? board[i] : '-'; /* Convert from other delimiters to dash */
-    
+
     if ((tmp = strstr(cmnt, "Time")) != NULL){
       *tmp = '\0';
     }
@@ -168,6 +169,7 @@ main(int argc, char **argv)
     store_result(bid, name, (*get_name)(), diff, left2, board);
 
     strncpy(board2, board, sizeof(board)); // Copy in case next row is the correct solution
+    board2[sizeof(board2) - 1] = '\0';
   }
   
   fclose(fp);
