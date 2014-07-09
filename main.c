@@ -90,7 +90,7 @@ main(int argc, char **argv)
 
   fp = fopen(fnam, "r");
 
-  while (fgets(board, 1024, fp) != NULL){
+  while (fgets(board, sizeof(board) - 1, fp) != NULL){
 
     if (memchr(board, '.', 81) == NULL && memchr(board, '-', 81) == NULL )
     {
@@ -103,11 +103,10 @@ main(int argc, char **argv)
 	exit(-1);
     }
 
-#ifdef BENCH
-      
+    board[81] = '\0';
+#ifdef BENCH      
     board[81 + COMMENT_LENGTH + 1] = '\0';
     printf(" Run %s ", board);
-    board[81] = '\0';
     cmnt = &board[82];
 #else
     printf("\n\n-----------------");
