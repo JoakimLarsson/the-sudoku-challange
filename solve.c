@@ -323,7 +323,9 @@ char rows[]     = "0000000001111111112222222223333333334444444445555555556666666
     HIDDEN_PAIR_IN_COL,
     HIDDEN_PAIR_IN_ROW,
     HIDDEN_PAIR_IN_SQR,
-    POINTINGS_IN_SQR
+    POINTINGS_IN_SQR,
+    LINES_FROM_SQR,
+    SQR_REDUCTION
     };
 
 #ifdef DEBUG
@@ -332,13 +334,13 @@ char rows[]     = "0000000001111111112222222223333333334444444445555555556666666
       "Naked Pair in Column",    "Naked Pair in Row",    "Naked Pair in Square",  
       "Naked Triple in Column",  "Naked Triple in Row",  "Naked Triple in Square",  
       "Hidden Pair in Column",   "Hidden Pair in Row",   "Hidden Pair in Square",
-      "Pointings in Square"
+      "Pointings in Square",     "Lines From Box",       "Box Reduction"
     };
 #endif
 
     fnd = 1;
     type = SINGLE_IN_COL;
-    while (fnd > 0 || type < POINTINGS_IN_SQR)
+    while (fnd > 0 || type < LINES_FROM_SQR)
     {
       DEBUG4(print_board(board););
       type = (fnd == 0) ? type + 1 : 0;
@@ -409,6 +411,13 @@ char rows[]     = "0000000001111111112222222223333333334444444445555555556666666
 	    {
 	      switch (type)
 	      {
+	      case LINES_FROM_SQR:
+		{
+		  
+		}
+		break;
+	      case SQR_REDUCTION:
+		break;
 	      case POINTINGS_IN_SQR:
 		{
 		  DEBUG4(printf("Checking Box: %d for number %d modulus 3: %d\n", ci, ri + 1, ci % 3););
