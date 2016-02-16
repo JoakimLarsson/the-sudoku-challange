@@ -84,5 +84,5 @@ When developing a solver you can sort out the boards that you fully solve, for c
 
   HAVE FUN!
 
- Joakim Larsson, joakim@bildrulle.nu
+ Joakim Larsson Edström, JoakimLarsson42@gmail.com
 
